@@ -1,0 +1,89 @@
+{
+  "generation": "Built-in image generation; 19 new environments, six individually cropped existing environments.",
+  "assets": [
+    {
+      "image": "/art/arenas/valley-of-the-end.webp",
+      "prompt": "Use case: stylized-concept. Asset type: final background for a side-view 2D anime fighting game, one seamless wide landscape image, 16:9. Paint the Valley of the End from Naruto: two opposing monumental shinobi statues carved into sheer cliffs on far left and far right, a tall central waterfall descending into a dramatic river gorge, distant mist and stormy blue-gray mountains, an empty horizontal wet stone fighting ledge across the entire foreground at 81% image height. Hand-painted premium anime game environment with crisp architectural forms, detailed stone texture, layered atmospheric depth, cinematic cool lighting. Side-on camera at fighter height, keep the central play space clear. NO characters, people, UI, lettering, border, logos, split panels or watermark. This must be a complete environment with distinct geography."
+    },
+    {
+      "image": "/art/arenas/chunin-exam-arena.webp",
+      "prompt": "Use case: stylized-concept. Asset type: standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Chunin Exam Arena from Naruto: a circular sandy fighting stadium enclosed by tall curved concrete grandstands, green cloth banners, an enormous closed gate in the background, weathered stone architecture, bright ochre sand and warm clear sunshine. Empty central sand fighting floor across the full foreground. Premium hand-painted anime game environment, crisp shapes, detailed textures, layered atmospheric depth, dramatic cinematic lighting. Side-on camera at fighter height; level horizontal ground plane at 81% image height; central play space clear. NO people, characters, UI, lettering, borders, logos, split panels or watermark. This is one complete distinct environment, not a contact sheet."
+    },
+    {
+      "image": "/art/arenas/akatsuki-hideout.webp",
+      "prompt": "Use case: stylized-concept. Asset type: standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Akatsuki Hideout from Naruto: a vast subterranean cavern with an enormous sealed stone door with circular carved symbol, huge stalactites, crimson torch flames, scattered boulders. Dark obsidian rock fighting floor and a subtle ritual circle on the ground. Intense red light contrasting cool blue rock. Premium hand-painted anime game environment, crisp shapes, detailed textures, layered atmospheric depth, dramatic cinematic lighting. Side-on camera at fighter height; level horizontal ground plane at 81% image height; central play space clear. NO people, characters, UI, lettering, borders, logos, split panels or watermark. This is one complete distinct environment, not a contact sheet."
+    },
+    {
+      "image": "/art/arenas/fourth-great-ninja-war-battlefield.webp",
+      "prompt": "Use case: stylized-concept. Asset type: standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Fourth Great Ninja War Battlefield from Naruto: a devastated ash plain stretching to jagged shattered ridges, splintered boulders and a few broken weapons embedded in scorched ground, ominous violet dusk and distant columns of smoke under dramatic clouds. Empty rugged level rubble fighting floor across the entire foreground. Premium hand-painted anime game environment, crisp shapes, detailed textures, layered atmospheric depth, dramatic cinematic lighting. Side-on camera at fighter height; level horizontal ground plane at 81% image height; central play space clear. NO people, characters, UI, lettering, borders, logos, split panels or watermark. This is one complete distinct environment, not a contact sheet."
+    },
+    {
+      "image": "/art/arenas/sabaody.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Sabaody Archipelago from One Piece: a luminous mangrove forest by emerald water, enormous tree trunks and arched roots, large floating iridescent soap bubbles, little waterfront bridges in the distance. Clear pale mint daylight, warm green canopy, soft blue water reflections. Empty horizontal moss and root path across the full foreground. Premium hand-painted anime game environment with crisp architectural forms, rich detailed texture, layered depth, cinematic lighting. Side-on camera at fighter height, level fighting ground at 81% image height, uncluttered central play space. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/enies-lobby.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Enies Lobby from One Piece: an enormous white judiciary fortress on a sheer island, monumental arched bridges above a chasm of ocean waterfalls, huge crenellated central tower, crisp blue eternal daylight. A white stone causeway spans the entire foreground horizontally as the fighting floor. Architectural scale and cascading blue ocean are the main features. Premium hand-painted anime game environment with crisp architectural forms, rich detailed texture, layered depth, cinematic lighting. Side-on camera at fighter height, level fighting ground at 81% image height, uncluttered central play space. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/wano.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Wano from One Piece: a red wooden bridge across a Japanese canal in a samurai town, spectacular layered Japanese castle roofs, red torii gate, cherry blossom trees, sunlit pink petals, luminous gold sunset. The empty horizontal wooden bridge deck fills the lower fifth of the scene as the fighting floor. Premium hand-painted anime game environment with crisp architectural forms, rich detailed texture, layered depth, cinematic lighting. Side-on camera at fighter height, level fighting ground at 81% image height, uncluttered central play space. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/onigashima.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Onigashima from One Piece: a colossal skull fortress with two immense upward-curving horns, towering above dense Japanese castle roofs, firelit red lanterns, violet lightning storm over a dark sea, smoky purple night. Flat black volcanic rock fighting ledge across the foreground, central space open and clear. Premium hand-painted anime game environment with crisp architectural forms, rich detailed texture, layered depth, cinematic lighting. Side-on camera at fighter height, level fighting ground at 81% image height, uncluttered central play space. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/karakura-town.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Karakura Town from Bleach: an empty modern Japanese street at blue twilight, power lines crossing above modest shops with unlettered signs, a railway overpass in the distance, warm amber streetlights reflecting on rain-wet asphalt. Horizontal street surface across the lower foreground, subtle urban detail, no figures. Premium hand-painted anime environment with crisp shapes, detailed texture, layered atmospheric depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting ground at 81% image height; central play space clear. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/hueco-mundo.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Hueco Mundo from Bleach: an immense white-sand desert beneath an absolute black night sky, a huge sharp crescent moon, a few skeletal white quartz trees, silver dunes fading into the horizon. Extremely spare otherworldly composition, cold monochrome light, smooth level sand fighting ground in the lower fifth. No buildings. Premium hand-painted anime environment with crisp shapes, detailed texture, layered atmospheric depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting ground at 81% image height; central play space clear. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/las-noches.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Las Noches from Bleach: the interior of an enormous ivory-white fortress hall, rows of towering rectangular pillars and ribbed arches receding to a distant throne, immense solemn scale, cold pale shafts of light in suspended dust, polished pale marble floor. Horizontal empty fighting floor in the foreground. Premium hand-painted anime environment with crisp shapes, detailed texture, layered atmospheric depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting ground at 81% image height; central play space clear. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/royal-palace.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Royal Palace from Bleach: heavenly floating Japanese palaces above a brilliant sea of white clouds, ornate golden sacred gates, suspended green gardens and bridges, vivid clear blue sky. An empty polished marble terrace forms the horizontal foreground fighting floor, golden architectural trim. Premium hand-painted anime environment with crisp shapes, detailed texture, layered atmospheric depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting ground at 81% image height; central play space clear. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/final-selection.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Final Selection mountain from Demon Slayer: luminous hanging purple wisteria blossoms form arches above a mossy stone path, dark cedar forest and layered mountains under soft moonlight, violet and indigo glow, tiny drifting petals. Empty level earth and moss fighting path across the foreground. Premium hand-painted anime environment with crisp architectural forms, rich detailed texture, layered depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting floor at 81% image height. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/mugen-train.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Mugen Train from Demon Slayer: the empty flat dark-steel roof of a speeding steam train stretches horizontally across the entire foreground; vintage passenger cars and locomotive extend into the distance to the far left, steam trails sweep across the sky, a bright blue moon above distant wooded mountains at night. Clear central play space ABOVE the roof, camera side-on at roof height, not a view from inside a train. Premium hand-painted anime environment with crisp architectural forms, rich detailed texture, layered depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting floor at 81% image height. No people, characters, text, UI, logos, border, split panels or watermark.\nRevision: Edit this side-view anime fighting-game train background. Preserve the blue moon, wooded mountain vista, nighttime palette, steam train and hand-painted style. Correct only the fighting surface and framing: move the foreground train roof DOWN so the back edge of its flat top is at 76% of image height, the usable flat horizontal top surface is between 76% and 90%, and the windows are out of frame below the image. The central 75% of the train roof must be a flat horizontal platform with no raised vents, curves or obstacles, suitable for fighters standing at 81% image height. Extend the sky and mountain vista naturally into the newly revealed vertical space. Same 16:9 image, no text, UI or people."
+    },
+    {
+      "image": "/art/arenas/entertainment-district.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Entertainment District from Demon Slayer: a dense Edo-period Japanese street at night, red wooden facades, tall ornate balconies, dozens of warm glowing golden lanterns, illuminated shoji screens, rich magenta and amber reflections on a broad stone street. Luxurious theatrical night lighting. No readable writing anywhere. Premium hand-painted anime environment with crisp architectural forms, rich detailed texture, layered depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting floor at 81% image height. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/swordsmith-village.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Swordsmith Village from Demon Slayer: a secluded green mountain hamlet in soft morning light, thatched wooden cottages, a large waterwheel by a clear flowing stream, forge chimney smoke, bamboo and forested peaks, tools stored beside a distant workshop. Empty horizontal stone courtyard forms the foreground fighting floor. Premium hand-painted anime environment with crisp architectural forms, rich detailed texture, layered depth and cinematic lighting. Side-on camera at fighter height; continuous level fighting floor at 81% image height. No people, characters, text, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/hyperbolic-time-chamber.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Hyperbolic Time Chamber from Dragon Ball: an infinite luminous white void and endless pale tiled floor, a small distant ornate pavilion with a golden dome slightly left of center, two enormous decorative hourglasses beside the pavilion, delicate pale blue shadows. Vast pure white negative space is essential. No mountains, cities, clouds or trees. Empty level fighting floor. Premium hand-painted anime environment with crisp shapes, detailed textures, layered atmosphere and cinematic lighting. Continuous horizontal ground plane at 81% image height; central play space clear. No people, characters, lettering, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/cell-games-arena.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Cell Games Arena from Dragon Ball: a raised square white stone tournament ring with four pointed corner pillars, isolated in a remote rocky desert with tan mesas and green scrub, bright crisp cyan sky. Camera side-on low at ring height. The flat ring TOP surface spans the entire foreground, with its back edge near 76% of image height and the front edge below 90%; plenty of empty space for fighters above it. Premium hand-painted anime environment with crisp shapes, detailed textures, layered atmosphere and cinematic lighting. Continuous horizontal ground plane at 81% image height; central play space clear. No people, characters, lettering, UI, logos, border, split panels or watermark."
+    },
+    {
+      "image": "/art/arenas/tournament-of-power.webp",
+      "prompt": "Use case: stylized-concept. Asset type: one standalone wide 16:9 background for a side-view 2D anime fighting game. Paint Tournament of Power from Dragon Ball: an immense shattered circular slate arena suspended in a cosmic purple void, a towering central green pillar, floating broken platforms, distant lavender nebula and orange-cyan galaxies. The fractured arena top spans the entire foreground as a flat fighting floor; dramatic otherworldly scale, no planet surface or daylight. Premium hand-painted anime environment with crisp shapes, detailed textures, layered atmosphere and cinematic lighting. Continuous horizontal ground plane at 81% image height; central play space clear. No people, characters, lettering, UI, logos, border, split panels or watermark."
+    }
+  ],
+  "preserved": [
+    "hidden-leaf-village",
+    "marineford",
+    "soul-society",
+    "infinity-castle",
+    "world-martial-arts-tournament",
+    "planet-namek"
+  ]
+}

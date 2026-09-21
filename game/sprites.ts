@@ -18,6 +18,15 @@ function load(src:string){
  pending.set(src,promise);return promise;
 }
 export const LOBBY_ART_IDS = new Set(['naruto-uzumaki', 'ichigo-kurosaki', 'tanjiro-kamado']);
+export interface LobbyAnchor {
+ anchorX: number;
+ anchorY: number;
+}
+export const LOBBY_ART_ANCHORS: Record<string, LobbyAnchor> = {
+ 'naruto-uzumaki': { anchorX: 231 / 450, anchorY: 1232 / 1233 },
+ 'ichigo-kurosaki': { anchorX: 295 / 572, anchorY: 1230 / 1231 },
+ 'tanjiro-kamado': { anchorX: 305 / 588, anchorY: 1251 / 1255 }
+};
 export function hasLobbyArt(id: string): boolean {
  return LOBBY_ART_IDS.has(id);
 }
@@ -87,7 +96,8 @@ export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,ti
   if(!img?.complete||!img.naturalWidth){
    void load(src).catch(()=>{});
   }else{
-   const targetH=fighterHeight(f.c.id)*1.14*extraScale;
+   const anchor = LOBBY_ART_ANCHORS[f.c.id] || { anchorX: 0.5, anchorY: 0.998 };
+   const targetH=fighterHeight(f.c.id)*1.08*extraScale;
    const imgAspect=img.naturalWidth/img.naturalHeight;
    const targetW=targetH*imgAspect;
 
@@ -100,7 +110,7 @@ export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,ti
    if(f.flash>0)ctx.filter='brightness(1.8) saturate(.5)';
    ctx.imageSmoothingEnabled=true;
    ctx.imageSmoothingQuality='high';
-   ctx.drawImage(img,-targetW/2,-targetH,targetW,targetH);
+   ctx.drawImage(img,-targetW*anchor.anchorX,-targetH*anchor.anchorY,targetW,targetH);
    ctx.restore();
    return true;
   }

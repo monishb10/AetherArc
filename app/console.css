@@ -46,13 +46,14 @@
 .quick-btn:hover{background:#17273f;color:#fff}
 .notification-pill{background:#ffcd67;color:#0d141e;font:800 10px var(--font-sans);border-radius:10px;padding:1px 6px;line-height:1.2}
 
-/* Tier 2: 3-Fighter Stage */
-.lobby-stage-container{position:relative;flex:1;min-height:300px;width:100%;overflow:hidden;border-radius:4px}
+/* Tier 2: Shared Lobby Stage Deck (Stage Canvas & Name-Card Row in ONE shared positioning container) */
+.lobby-stage-deck{position:relative;flex:1;min-height:0;width:100%;display:flex;flex-direction:column;overflow:hidden}
+.lobby-stage-container{position:relative;flex:1;min-height:220px;width:100%;overflow:hidden;border-radius:4px}
 .lobby-stage-canvas{display:block;width:100%;height:100%;touch-action:none}
 
 /* Tier 3: Dedicated Name Cards Row (Directly below stage baseline) */
-.lobby-cards-row{position:relative;width:100%;height:64px;flex-shrink:0;margin:4px 0 8px;z-index:10}
-.lobby-role-badge{position:absolute;top:0;width:clamp(160px,24vw,240px);height:60px;background:linear-gradient(135deg,#0d1624f5,#09101cf8);border:1px solid #7a98b833;border-left:3px solid var(--element-color,#6cecf2);border-radius:3px;padding:6px 12px 6px 10px;display:flex;align-items:center;gap:10px;text-align:left;color:#d5e2ef;box-shadow:0 6px 20px #0008;transition:transform .18s,border-color .18s,box-shadow .18s,background .18s;cursor:pointer}
+.lobby-cards-row{position:relative;width:100%;height:64px;flex-shrink:0;margin:6px 0 6px;z-index:10}
+.lobby-role-badge{position:absolute;top:0;width:clamp(150px,22vw,240px);height:60px;background:linear-gradient(135deg,#0d1624f5,#09101cf8);border:1px solid #7a98b833;border-left:3px solid var(--element-color,#6cecf2);border-radius:3px;padding:6px 12px 6px 10px;display:flex;align-items:center;gap:10px;text-align:left;color:#d5e2ef;box-shadow:0 6px 20px #0008;transition:transform .18s,border-color .18s,box-shadow .18s,background .18s;cursor:pointer}
 .lobby-role-badge.slot-main{border-left-color:#ffcd67;background:linear-gradient(135deg,#121d30f5,#0b1322fa)}
 .lobby-role-badge:hover,.lobby-role-badge.is-hovered{transform:translateX(-50%) translateY(-2px);border-color:#ffcd67;background:#16243af8;box-shadow:0 10px 28px #000a,0 0 15px #ffcd6722}
 .lobby-role-badge.is-selected{border-color:#ffcd67;box-shadow:0 0 0 2px #ffcd6744,0 8px 30px #ffcd6722;background:#1a2b44}
@@ -156,9 +157,10 @@
  .cinematic-lobby{padding:8px 12px 12px;overflow-y:auto}
  .lobby-top-strip{height:40px}
  .lobby-quick-bar{display:none}
- .lobby-stage-container{min-height:240px;flex:none;height:48vh}
- .lobby-cards-row{height:50px;margin:2px 0 6px}
- .lobby-role-badge{width:clamp(100px,30vw,130px);height:48px;padding:3px 6px;gap:4px}
+ .lobby-stage-deck{flex:none;height:auto}
+ .lobby-stage-container{min-height:220px;flex:none;height:46vh}
+ .lobby-cards-row{height:50px;margin:4px 0 6px}
+ .lobby-role-badge{width:clamp(86px,28vw,130px);height:48px;padding:3px 6px;gap:4px}
  .badge-tag{min-width:28px;padding-right:4px}
  .badge-tag strong{font-size:9px}
  .badge-slot-num{display:none}

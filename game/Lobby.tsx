@@ -121,6 +121,9 @@ export function Lobby({
  onModeChange
 }: LobbyProps) {
  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+ const stageDeckRef = useRef<HTMLDivElement | null>(null);
+ const stageContainerRef = useRef<HTMLDivElement | null>(null);
+ const stageMetricsRef = useRef<{ width: number; height: number; dpr: number }>({ width: 0, height: 0, dpr: 1 });
  const [activeSlot, setActiveSlot] = useState<number | null>(null);
  const [editSlot, setEditSlot] = useState<number | null>(null);
  const [editWorld, setEditWorld] = useState<string>('All worlds');
@@ -134,7 +137,7 @@ export function Lobby({
  const entranceTimerRef = useRef<number>(0);
  const fighterPosRef = useRef<{x: number; y: number; width: number; height: number; roleIndex: number}[]>([]);
 
- // Single source of truth for the 3 lobby slots: Left Support, Center Main, Right Tag
+ // Single source of truth for the 3 lobby slots: Left Support (25%), Center Main (50%), Right Tag (75%)
  const lobbySlots: LobbySlotConfig[] = [
   {
    slot: 'support',
@@ -143,9 +146,9 @@ export function Lobby({
    roleTitle: 'SUPPORT · HEAL',
    badgeNumber: '01',
    fighterId: team[1] || 'ichigo-kurosaki',
-   xPct: 24,
+   xPct: 25,
    scale: 0.94,
-   depthOffset: -10,
+   depthOffset: -6,
    zIndex: 1,
    timingOffset: 2.1,
    freqRate: 0.92
@@ -158,8 +161,8 @@ export function Lobby({
    badgeNumber: '02',
    fighterId: team[0] || 'naruto-uzumaki',
    xPct: 50,
-   scale: 1.08,
-   depthOffset: 12,
+   scale: 1.06,
+   depthOffset: 6,
    zIndex: 2,
    timingOffset: 0.0,
    freqRate: 1.00
@@ -171,9 +174,9 @@ export function Lobby({
    roleTitle: 'TAG PARTNER',
    badgeNumber: '03',
    fighterId: team[2] || 'tanjiro-kamado',
-   xPct: 76,
+   xPct: 75,
    scale: 0.94,
-   depthOffset: -10,
+   depthOffset: -6,
    zIndex: 1,
    timingOffset: 4.3,
    freqRate: 1.08
@@ -186,7 +189,7 @@ export function Lobby({
   void prepareArenaArt(arena).catch(() => {});
  }, [team, arena]);
 
- // Canvas animation loop
+ // Canvas animation loop with CSS-pixel coordinates and single DPR transform
  useEffect(() => {
   const canvas = canvasRef.current;
   if (!canvas) return;
@@ -194,6 +197,37 @@ export function Lobby({
   if (!ctx) return;
 
   let running = true;
+
+  const updateStageDimensions = () => {
+   const container = stageContainerRef.current;
+   if (!container || !canvas) return;
+
+   const rect = container.getBoundingClientRect();
+   const cssWidth = Math.round(rect.width);
+   const cssHeight = Math.round(rect.height);
+   if (cssWidth <= 0 || cssHeight <= 0) return;
+
+   const dpr = Math.min(window.devicePixelRatio || 1, 2);
+   stageMetricsRef.current = { width: cssWidth, height: cssHeight, dpr };
+
+   const bufferWidth = Math.round(cssWidth * dpr);
+   const bufferHeight = Math.round(cssHeight * dpr);
+
+   if (canvas.width !== bufferWidth || canvas.height !== bufferHeight) {
+    canvas.width = bufferWidth;
+    canvas.height = bufferHeight;
+   }
+   canvas.style.width = `${cssWidth}px`;
+   canvas.style.height = `${cssHeight}px`;
+  };
+
+  const ro = new ResizeObserver(() => {
+   updateStageDimensions();
+  });
+  if (stageContainerRef.current) {
+   ro.observe(stageContainerRef.current);
+  }
+  updateStageDimensions();
 
   const handleVisibility = () => {
    if (document.hidden) {
@@ -238,8 +272,14 @@ export function Lobby({
     entranceTimerRef.current = Math.max(0, entranceTimerRef.current - dt);
    }
 
-   const width = canvas.width;
-   const height = canvas.height;
+   const { width, height, dpr } = stageMetricsRef.current;
+   if (width <= 0 || height <= 0) {
+    rafRef.current = requestAnimationFrame(render);
+    return;
+   }
+
+   // 1. Establish CSS-pixel coordinate space via transform (0 to width, 0 to height)
+   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
    ctx.clearRect(0, 0, width, height);
 
    // 1. Draw Arena Background with Depth
@@ -315,25 +355,30 @@ export function Lobby({
    }
 
    // 3. Ground Baseline Platform
-   const floorY = height * 0.90;
-   const floorGrad = ctx.createLinearGradient(0, floorY - 30, 0, height);
+   // Floor placed at ~81% height so feet are securely planted well above canvas bottom / cards row
+   const floorY = Math.round(height * 0.81);
+   const floorGrad = ctx.createLinearGradient(0, floorY - 24, 0, height);
    floorGrad.addColorStop(0, '#0e182800');
-   floorGrad.addColorStop(0.2, '#0b142499');
-   floorGrad.addColorStop(0.7, '#060b14eb');
+   floorGrad.addColorStop(0.25, '#0b142499');
+   floorGrad.addColorStop(0.75, '#060b14eb');
    floorGrad.addColorStop(1, '#04070ef8');
    ctx.fillStyle = floorGrad;
-   ctx.fillRect(0, floorY - 30, width, height - floorY + 30);
+   ctx.fillRect(0, floorY - 24, width, height - floorY + 24);
 
    // Ground perspective depth ring
    ctx.save();
    ctx.strokeStyle = '#6cecf215';
    ctx.lineWidth = 1.4;
    ctx.beginPath();
-   ctx.ellipse(width * 0.5, floorY + 12, width * 0.45, 42, 0, 0, Math.PI * 2);
+   ctx.ellipse(width * 0.5, floorY + 8, width * 0.44, 36, 0, 0, Math.PI * 2);
    ctx.stroke();
    ctx.restore();
 
-   // 4. Staging Layout for the 3 Fighters: Left (Support), Center (Main), Right (Tag)
+   // 4. Staging Layout for the 3 Fighters: Left Support (25%), Center Main (50%), Right Tag (75%)
+   // Available height for fighters above floor baseline, reserving at least 26px headroom from top
+   const maxFighterH = Math.min(290, Math.max(160, floorY - 28));
+   const baseScale = Math.min(1.0, maxFighterH / 280);
+
    const isMobile = width < 768;
    const renderSlots = [...lobbySlots].sort((a, b) => a.zIndex - b.zIndex);
    fighterPosRef.current = [];
@@ -342,23 +387,24 @@ export function Lobby({
     const c = byId(s.fighterId);
     if (!c) continue;
 
-    const posX = width * (s.xPct / 100);
+    // Both character body/foot anchor and HTML name card share the exact horizontal center
+    const posX = Math.round(width * (s.xPct / 100));
     const posY = floorY + s.depthOffset;
-    const scale = s.scale * (isMobile ? 0.86 : 1.0);
+    const scale = s.scale * baseScale * (isMobile ? 0.88 : 1.0);
 
     const prog = player.owned[c.id];
     const level = prog?.level ?? 1;
     const mastery = prog?.mastery ?? 0;
     const f = makeLobbyFighter(c, level, mastery, posX, posY, 1);
     f.state = 'lobbyIdle';
-    const fighterH = 260;
+    const fighterH = 260 * scale;
 
-    // Record position for click detection mapped to roleIndex
+    // Record position for click detection in CSS pixels
     fighterPosRef.current.push({
-     x: posX - 65 * scale,
-     y: posY - fighterH * scale,
-     width: 130 * scale,
-     height: fighterH * scale,
+     x: posX - 55 * scale,
+     y: posY - fighterH,
+     width: 110 * scale,
+     height: fighterH + 12,
      roleIndex: s.roleIndex
     });
 
@@ -367,31 +413,31 @@ export function Lobby({
     const isEntering = entranceSlot === s.roleIndex && entranceTimerRef.current > 0;
     const elementColor = ELEMENT_COLORS[c.element] || '#6cecf2';
 
-    // A. Ground Contact Shadows
+    // A. Ground Contact Shadows directly beneath the grounded feet
     ctx.save();
     // Ambient occlusion contact shadow (dark, tight at feet)
     ctx.fillStyle = '#000000dd';
     ctx.beginPath();
-    ctx.ellipse(posX, posY, 52 * scale, 7.5 * scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(posX, posY, 48 * scale, 6.5 * scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Diffuse cast shadow (softer, wider)
-    const shadowGrad = ctx.createRadialGradient(posX, posY, 8, posX, posY, 100 * scale);
+    const shadowGrad = ctx.createRadialGradient(posX, posY, 6, posX, posY, 90 * scale);
     shadowGrad.addColorStop(0, '#00000088');
-    shadowGrad.addColorStop(0.5, '#00000038');
+    shadowGrad.addColorStop(0.5, '#00000035');
     shadowGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = shadowGrad;
     ctx.beginPath();
-    ctx.ellipse(posX, posY + 2, 95 * scale, 16 * scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(posX, posY + 2, 85 * scale, 13 * scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Soft elemental floor underglow
-    const elemGlow = ctx.createRadialGradient(posX, posY, 4, posX, posY, 85 * scale);
+    const elemGlow = ctx.createRadialGradient(posX, posY, 4, posX, posY, 75 * scale);
     elemGlow.addColorStop(0, isSelected ? '#ffcd6755' : isHovered ? elementColor + '55' : elementColor + '20');
     elemGlow.addColorStop(1, 'transparent');
     ctx.fillStyle = elemGlow;
     ctx.beginPath();
-    ctx.ellipse(posX, posY + 1, 80 * scale, 15 * scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(posX, posY + 1, 70 * scale, 12 * scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Floor spotlight ring if hovered or selected
@@ -401,7 +447,7 @@ export function Lobby({
      ctx.shadowColor = isSelected ? '#ffcd67' : elementColor;
      ctx.shadowBlur = 14;
      ctx.beginPath();
-     ctx.ellipse(posX, posY, 72 * scale, 13 * scale, 0, 0, Math.PI * 2);
+     ctx.ellipse(posX, posY, 65 * scale, 11 * scale, 0, 0, Math.PI * 2);
      ctx.stroke();
      ctx.shadowBlur = 0;
     }
@@ -460,21 +506,10 @@ export function Lobby({
    rafRef.current = requestAnimationFrame(render);
   };
 
-  // Canvas resize observer to keep crisp resolution
-  const ro = new ResizeObserver(entries => {
-   for (const entry of entries) {
-    const {width, height} = entry.contentRect;
-    if (width && height) {
-     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-     canvas.width = Math.floor(width * dpr);
-     canvas.height = Math.floor(height * dpr);
-     ctx.scale(dpr, dpr);
-    }
-   }
-  });
-
-  const parent = canvas.parentElement;
-  if (parent) ro.observe(parent);
+  const handleResize = () => {
+   updateStageDimensions();
+  };
+  window.addEventListener('resize', handleResize);
 
   rafRef.current = requestAnimationFrame(render);
 
@@ -482,26 +517,25 @@ export function Lobby({
    running = false;
    cancelAnimationFrame(rafRef.current);
    document.removeEventListener('visibilitychange', handleVisibility);
+   window.removeEventListener('resize', handleResize);
    ro.disconnect();
   };
  }, [team, arena, motion, particlesEnabled, activeSlot, editSlot, entranceSlot, player.owned]);
 
- // Handle click on canvas character to open team editor
+ // Handle click on canvas character to open team editor (pure CSS pixel coordinates)
  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
   const canvas = canvasRef.current;
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width / (window.devicePixelRatio > 1 ? window.devicePixelRatio : 1);
-  const scaleY = canvas.height / rect.height / (window.devicePixelRatio > 1 ? window.devicePixelRatio : 1);
-  const clickX = (e.clientX - rect.left) * scaleX;
-  const clickY = (e.clientY - rect.top) * scaleY;
+  const clickX = e.clientX - rect.left;
+  const clickY = e.clientY - rect.top;
 
   for (const f of fighterPosRef.current) {
    if (
-    clickX >= f.x - 20 &&
-    clickX <= f.x + f.width + 20 &&
-    clickY >= f.y - 20 &&
-    clickY <= f.y + f.height + 30
+    clickX >= f.x &&
+    clickX <= f.x + f.width &&
+    clickY >= f.y &&
+    clickY <= f.y + f.height
    ) {
     sound.unlock();
     sound.play('click');
@@ -515,18 +549,16 @@ export function Lobby({
   const canvas = canvasRef.current;
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width / (window.devicePixelRatio > 1 ? window.devicePixelRatio : 1);
-  const scaleY = canvas.height / rect.height / (window.devicePixelRatio > 1 ? window.devicePixelRatio : 1);
-  const mouseX = (e.clientX - rect.left) * scaleX;
-  const mouseY = (e.clientY - rect.top) * scaleY;
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
 
   let found: number | null = null;
   for (const f of fighterPosRef.current) {
    if (
-    mouseX >= f.x - 20 &&
-    mouseX <= f.x + f.width + 20 &&
-    mouseY >= f.y - 20 &&
-    mouseY <= f.y + f.height + 30
+    mouseX >= f.x &&
+    mouseX <= f.x + f.width &&
+    mouseY >= f.y &&
+    mouseY <= f.y + f.height
    ) {
     found = f.roleIndex;
     break;
@@ -609,61 +641,63 @@ export function Lobby({
     </div>
    </header>
 
-   {/* Tier 2: 3-Fighter Stage (Canvas with Arena and 3 Upright Camera-Facing Fighters) */}
-   <div className="lobby-stage-container">
-    <canvas
-     ref={canvasRef}
-     className="lobby-stage-canvas"
-     onClick={handleCanvasClick}
-     onMouseMove={handleCanvasMouseMove}
-     onMouseLeave={() => setActiveSlot(null)}
-     style={{cursor: activeSlot !== null ? 'pointer' : 'default'}}
-    />
-   </div>
+   {/* Tier 2: Shared Lobby Stage Deck (Stage Canvas & Name-Card Row in ONE shared positioning container) */}
+   <div className="lobby-stage-deck" ref={stageDeckRef}>
+    <div className="lobby-stage-container" ref={stageContainerRef}>
+     <canvas
+      ref={canvasRef}
+      className="lobby-stage-canvas"
+      onClick={handleCanvasClick}
+      onMouseMove={handleCanvasMouseMove}
+      onMouseLeave={() => setActiveSlot(null)}
+      style={{cursor: activeSlot !== null ? 'pointer' : 'default'}}
+     />
+    </div>
 
-   {/* Tier 3: Dedicated Name Cards Row (Directly below stage, perfectly centered under each fighter) */}
-   <div className="lobby-cards-row" aria-label="Selected battle team">
-    {lobbySlots.map(s => {
-     const c = byId(s.fighterId);
-     if (!c) return null;
-     const prog = player.owned[c.id];
-     const isSelected = editSlot === s.roleIndex;
-     const isHovered = activeSlot === s.roleIndex;
-     const elemColor = ELEMENT_COLORS[c.element];
+    {/* Dedicated Name Cards Row (Directly below stage, sharing exact horizontal centers with fighters) */}
+    <div className="lobby-cards-row" aria-label="Selected battle team">
+     {lobbySlots.map(s => {
+      const c = byId(s.fighterId);
+      if (!c) return null;
+      const prog = player.owned[c.id];
+      const isSelected = editSlot === s.roleIndex;
+      const isHovered = activeSlot === s.roleIndex;
+      const elemColor = ELEMENT_COLORS[c.element];
 
-     return (
-      <button
-       key={s.slot}
-       className={`lobby-role-badge slot-${s.slot} ${isSelected ? 'is-selected' : ''} ${isHovered ? 'is-hovered' : ''}`}
-       style={{
-        left: `${s.xPct}%`,
-        transform: 'translateX(-50%)',
-        '--element-color': elemColor
-       } as React.CSSProperties}
-       onClick={() => {
-        sound.unlock();
-        sound.play('click');
-        setEditSlot(s.roleIndex);
-       }}
-       aria-label={`Edit ${s.roleTitle}: ${c.name}, Level ${prog?.level ?? 1}`}
-      >
-       <div className="badge-tag">
-        <span className="badge-slot-num">{s.badgeNumber}</span>
-        <strong>{s.label}</strong>
-       </div>
-       <div className="badge-info">
-        <span className="badge-name">{c.name}</span>
-        <span className="badge-meta">
-         <small>LV. {prog?.level ?? 1}</small>
-         <RarityLabel c={c} />
+      return (
+       <button
+        key={s.slot}
+        className={`lobby-role-badge slot-${s.slot} ${isSelected ? 'is-selected' : ''} ${isHovered ? 'is-hovered' : ''}`}
+        style={{
+         left: `${s.xPct}%`,
+         transform: 'translateX(-50%)',
+         '--element-color': elemColor
+        } as React.CSSProperties}
+        onClick={() => {
+         sound.unlock();
+         sound.play('click');
+         setEditSlot(s.roleIndex);
+        }}
+        aria-label={`Edit ${s.roleTitle}: ${c.name}, Level ${prog?.level ?? 1}`}
+       >
+        <div className="badge-tag">
+         <span className="badge-slot-num">{s.badgeNumber}</span>
+         <strong>{s.label}</strong>
+        </div>
+        <div className="badge-info">
+         <span className="badge-name">{c.name}</span>
+         <span className="badge-meta">
+          <small>LV. {prog?.level ?? 1}</small>
+          <RarityLabel c={c} />
+         </span>
+        </div>
+        <span className="badge-swap-icon" title="Change fighter">
+         <RefreshCw size={13} />
         </span>
-       </div>
-       <span className="badge-swap-icon" title="Change fighter">
-        <RefreshCw size={13} />
-       </span>
-      </button>
-     );
-    })}
+       </button>
+      );
+     })}
+    </div>
    </div>
 
    {/* Tier 4: Dedicated Action Deck (Arena card + Mode selector + Prominent START FIGHT) */}

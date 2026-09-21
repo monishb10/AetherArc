@@ -82,7 +82,7 @@ export function samplePose(f:Fighter,time:number):Pose {
  }
  if(f.y<GROUND-2){p.frame=1;p.lean=f.vy<0?.025:-.035;p.legs=-.04;p.crouch=.04;p.arms=.028;p.cloth=f.vy<0?.02:-.015;return p;}
  const breath=Math.sin(time*2.4+f.c.seed*.73);
- p.bob=breath*.002;p.crouch=.004*(1+breath);p.arms=breath*.006;p.head=-breath*.002;p.cloth=Math.sin(time*3+f.c.seed)*.004;
+ p.bob=breath*.0015;p.crouch=.004*(1+breath);p.arms=breath*.006;p.head=-breath*.002;p.cloth=Math.sin(time*2.8+f.c.seed)*.006;
  if(f.state==='victory'){p.frame=f.clock>1.5?3:0;p.arms-=.012*smooth((f.clock-1)/.6);}
  return p;
 }

@@ -59,9 +59,13 @@ export function buildRig(f:Fighter,pose:number,time:number):Rig {
   if(f.state==='special'){body=0;lu=-.23*wind;ru=.23*wind;ll=-.2*wind;rl=.2*wind;}
  }else if(f.state==='ultimate'){
   const charge=1-smooth((f.clock-.7)/.35);lu=-charge*.18;ru=charge*.14;ll=-charge*.12;rl=charge*.12;body=.02*(1-charge);hipY=.015*charge;
- }else{
-  body=breath*.005;headAngle=-breath*.004;lu=breath*.010;ru=-breath*.012;hipY=breath*.002;
- }
+  }else{
+   const weightShift=Math.sin(time*1.35+f.c.seed*1.4);
+   body=breath*.005+weightShift*.006;headAngle=-breath*.004-weightShift*.005;
+   lu=breath*.010-weightShift*.006;ru=-breath*.012-weightShift*.006;
+   ll=breath*.004;rl=-breath*.004;
+   hipY=breath*.002;hipX=weightShift*.003;
+  }
  const root:V=[hipX,hipY];
  const torsoPoint=(p:V)=>add(add(hip,root),rot(sub(p,hip),body));
  const posed:Bone[]=rest.map(b=>({...b,a:[...b.a],b:[...b.b]}));

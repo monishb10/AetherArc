@@ -29,3 +29,148 @@
 .in-battle .action-pad>button>span{font-size:12px}.in-battle .combat-help{font-size:12px}.console-world-tabs [data-slot=tabs-trigger]{font-size:14px}.console-dock nav button{font-size:12px}.character-tile .tile-name{font-size:13px}.menu-team small,.console-team-slots small{font-size:12px}
 @media(max-width:760px){.console-dock nav{justify-content:flex-start}.console-dock nav button{min-width:66px;font-size:11px}.menu-team small,.console-team-slots small{font-size:10px}.menu-team strong{font-size:12px}.character-tile .tile-name{font-size:12px}.in-battle .combat-help{font-size:10px}}
 @media(max-height:550px) and (orientation:landscape){.in-battle .action-pad>button>span{font-size:10px}}
+
+/* CINEMATIC THREE-CHARACTER ANIMATED LOBBY */
+.cinematic-lobby{position:relative;width:100%;height:100%;min-height:560px;overflow:hidden;background:#050912;display:flex;flex-direction:column;isolation:isolate}
+.lobby-stage-container{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;z-index:1}
+.lobby-stage-canvas{display:block;width:100%;height:100%;touch-action:none}
+
+/* Grounded Floating Role Badges */
+.lobby-role-badges{position:absolute;bottom:116px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:clamp(10px,2.4vw,36px);padding:0 20px;z-index:4;pointer-events:none}
+.lobby-role-badge{pointer-events:auto;min-width:clamp(170px,18vw,230px);height:58px;background:linear-gradient(135deg,#0d1624f2,#09101cf8);border:1px solid #7a98b833;border-left:3px solid var(--element-color,#6cecf2);border-radius:3px;padding:6px 12px 6px 10px;display:flex;align-items:center;gap:10px;text-align:left;color:#d5e2ef;box-shadow:0 6px 20px #0008;transition:transform .18s,border-color .18s,box-shadow .18s,background .18s;cursor:pointer}
+.lobby-role-badge.slot-0{border-left-color:#ffcd67;transform:scale(1.04);background:linear-gradient(135deg,#121d30f5,#0b1322fa)}
+.lobby-role-badge:hover,.lobby-role-badge.is-hovered{transform:translateY(-3px);border-color:#ffcd67;background:#16243af8;box-shadow:0 10px 28px #000a,0 0 15px #ffcd6722}
+.lobby-role-badge.is-selected{border-color:#ffcd67;box-shadow:0 0 0 2px #ffcd6744,0 8px 30px #ffcd6722;background:#1a2b44}
+.badge-tag{display:flex;flex-direction:column;align-items:flex-start;min-width:44px;border-right:1px solid #ffffff18;padding-right:8px}
+.badge-slot-num{font:800 10px var(--font-sans);letter-spacing:.08em;color:#ffcd67;opacity:.9}
+.badge-tag strong{font:800 11px var(--font-display);letter-spacing:.08em;color:#fff;line-height:1.1}
+.badge-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.badge-name{font:700 13px var(--font-display);color:#f1f5fa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.badge-meta{display:flex;align-items:center;gap:8px;font-size:10px;color:#94a6bc}
+.badge-meta small{font-weight:700;color:#ffcd67;letter-spacing:.04em}
+.badge-swap-icon{color:#778ea6;margin-left:auto;transition:color .15s,transform .18s;display:flex;align-items:center;justify-content:center}
+.lobby-role-badge:hover .badge-swap-icon{color:#ffcd67;transform:rotate(45deg)}
+
+/* Lobby HUD */
+.lobby-hud{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:18px 32px 24px;z-index:5}
+.lobby-top-strip{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.lobby-brand-mark{display:flex;flex-direction:column;gap:2px}
+.brand-title{font-family:var(--font-display);font-style:italic;font-weight:900;font-size:clamp(22px,2.4vw,32px);line-height:1;letter-spacing:-.04em;color:#f0f4f9}
+.gold-text{color:#ffcd67}
+.brand-subtitle{font:700 10px var(--font-sans);letter-spacing:.26em;color:#8aa1ba;margin-top:2px}
+
+.lobby-quick-bar{pointer-events:auto;display:flex;align-items:center;gap:6px;background:#09121ff0;border:1px solid #6b84a22b;border-radius:4px;padding:4px 6px;box-shadow:0 4px 18px #0007}
+.quick-btn{height:36px;padding:0 12px;display:flex;align-items:center;gap:7px;background:transparent;border:0;border-radius:3px;color:#9eb0c5;font:700 11px var(--font-sans);letter-spacing:.06em;transition:background .15s,color .15s}
+.quick-btn small{font-size:10px;color:#6b829c;margin-left:2px}
+.quick-btn:hover{background:#17273f;color:#fff}
+.notification-pill{background:#ffcd67;color:#0d141e;font:800 10px var(--font-sans);border-radius:10px;padding:1px 6px;line-height:1.2}
+
+/* Bottom Action Deck */
+.lobby-action-deck{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;pointer-events:auto}
+.lobby-stage-card{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#0c1626f2,#080f1af8);border:1px solid #7390b133;border-radius:4px;padding:8px 14px 8px 8px;min-width:260px;max-width:340px;box-shadow:0 6px 24px #0008;transition:border-color .18s,transform .18s;cursor:pointer}
+.lobby-stage-card:hover{border-color:#ffcd67;transform:translateY(-2px);background:#132138f8}
+.stage-thumbnail{width:56px;height:44px;border-radius:3px;overflow:hidden;border:1px solid #ffffff20;flex-shrink:0}
+.stage-thumbnail .arena-art{width:100%;height:100%;background-size:cover;background-position:center}
+.stage-details{display:flex;flex-direction:column;gap:1px;flex:1;min-width:0}
+.stage-eyebrow{font:700 9px var(--font-sans);letter-spacing:.12em;color:#ffcd67;display:flex;align-items:center;gap:4px}
+.stage-title{font:800 13px var(--font-display);color:#edf3fa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage-anime{font-size:10px;color:#7e93ab}
+.change-stage-btn{background:transparent;border:0;color:#9db2c9;font:700 10px var(--font-sans);letter-spacing:.08em;display:flex;align-items:center;gap:3px;padding:0;transition:color .15s}
+.lobby-stage-card:hover .change-stage-btn{color:#ffcd67}
+
+/* Start Fight Core */
+.lobby-start-action{display:flex;flex-direction:column;align-items:flex-end;gap:9px}
+.lobby-mode-pills{display:flex;align-items:center;gap:4px;background:#09111ff0;border:1px solid #6b84a229;border-radius:4px;padding:3px}
+.mode-pill{height:30px;padding:0 12px;display:flex;align-items:center;gap:6px;background:transparent;border:0;border-radius:2px;color:#8da0b6;font:700 11px var(--font-sans);transition:background .15s,color .15s}
+.mode-pill:hover:not(:disabled){background:#152338;color:#fff}
+.mode-pill.active{background:#ffcd6722;color:#ffcd67;font-weight:800}
+.mode-pill.is-locked{opacity:.5}
+.mode-pill small{font-size:9px;color:#ffcd6788}
+
+.lobby-fight-button{position:relative;min-width:270px;height:66px;padding:0 24px;background:linear-gradient(135deg,#ffcd67,#f0b84c);border:0;border-radius:4px;color:#101722;display:flex;align-items:center;gap:15px;box-shadow:0 8px 30px #ffcd6733,0 2px 4px #0006;transition:transform .18s,box-shadow .18s,filter .18s;cursor:pointer;overflow:hidden}
+.lobby-fight-button:hover:not(:disabled){transform:translateY(-2px) scale(1.02);box-shadow:0 12px 38px #ffcd674f,0 0 20px #ffcd6755;filter:brightness(1.06)}
+.lobby-fight-button:active:not(:disabled){transform:translateY(1px) scale(.99)}
+.fight-btn-glow{position:absolute;inset:-50%;background:radial-gradient(ellipse at 40% 50%,#ffffff55,transparent 65%);pointer-events:none}
+.fight-icon{color:#101722;flex-shrink:0}
+.fight-text{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1}
+.fight-text strong{font:900 italic 24px/1 var(--font-display);letter-spacing:.02em;color:#0f1722}
+.fight-text small{font:700 10px var(--font-sans);letter-spacing:.12em;color:#4f3c16;text-transform:uppercase}
+.fight-arrow{color:#101722;transition:transform .18s}
+.lobby-fight-button:hover .fight-arrow{transform:translateX(4px)}
+
+/* Team Edit Dialog */
+.team-edit-dialog[data-slot=dialog-content]{max-width:860px;width:calc(100% - 32px);max-height:88vh;overflow:hidden;display:flex;flex-direction:column;background:#0a121ef5;border:1px solid #7393b844;box-shadow:0 18px 60px #000d;padding:24px 28px}
+.team-edit-title{margin-bottom:14px}
+.dialog-header-slot{display:flex;align-items:center;gap:10px}
+.slot-badge-gold{background:#ffcd67;color:#101622;font:800 11px var(--font-sans);padding:2px 8px;border-radius:2px;letter-spacing:.06em}
+.dialog-header-slot strong{font:800 20px var(--font-display);color:#edf4fb;letter-spacing:.02em}
+.dialog-subtitle{font-size:12px;color:#859bb4;display:block;margin-top:4px}
+
+.current-assigned-hero{display:flex;gap:18px;background:#101a2af2;border:1px solid #6b88ad33;border-radius:4px;padding:12px 16px;margin-bottom:16px;align-items:center}
+.hero-portrait-frame{width:76px;height:76px;border-radius:4px;overflow:hidden;border:1px solid #ffcd6755;flex-shrink:0}
+.hero-details{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.hero-heading{display:flex;align-items:center;gap:10px}
+.hero-heading h3{font:800 18px var(--font-display);color:#fff;margin:0}
+.hero-universe{font-size:11px;color:#ffcd67}
+.hero-stats-row{display:flex;gap:16px;font-size:11px;color:#869db4}
+.hero-stats-row b{color:#f0f4fa;font-weight:700}
+.hero-skills-row{display:flex;gap:8px;flex-wrap:wrap}
+.skill-chip{background:#162438;border:1px solid #5a759633;border-radius:3px;padding:2px 8px;font-size:11px;color:#c9d8ea;display:flex;align-items:center;gap:5px}
+.skill-chip kbd{background:#ffcd671c;border:1px solid #ffcd6755;color:#ffcd67;font-size:9px;padding:1px 4px}
+.skill-chip.ult{border-color:#ffcd6766;color:#ffcd67}
+
+.team-picker-toolbar{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.team-world-tabs [data-slot=tabs-list]{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.team-world-tabs [data-slot=tabs-trigger]{font-size:12px;padding:5px 10px;color:#8ba2bb}
+.team-world-tabs [data-state=active]{color:#ffcd67!important;border-bottom-color:#ffcd67!important}
+
+.team-picker-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-height:360px;overflow-y:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:#486382 #0b1320}
+.team-fighter-tile{position:relative;background:#101a29;border:1px solid #6b86a833;border-radius:4px;overflow:hidden;display:flex;flex-direction:column;padding:0;text-align:left;color:inherit;cursor:pointer;transition:transform .15s,border-color .15s}
+.team-fighter-tile:hover{transform:translateY(-2px);border-color:#ffcd67}
+.team-fighter-tile.is-current{border:2px solid #ffcd67;box-shadow:0 0 14px #ffcd6733}
+.team-fighter-tile.is-assigned{border-color:#6cecf255}
+.tile-portrait{position:relative;aspect-ratio:1/1.05;overflow:hidden;background:#0d1624}
+.assigned-role-tag{position:absolute;top:4px;left:4px;padding:2px 5px;font:800 9px var(--font-sans);border-radius:2px;letter-spacing:.04em;z-index:2;background:#18324a;color:#8ce3ff}
+.assigned-role-tag.slot-0{background:#ffcd67;color:#101622}
+.tile-level{position:absolute;bottom:4px;right:4px;font:700 9px var(--font-sans);background:#080e18cc;padding:1px 5px;border-radius:2px;color:#c9d8ea}
+.tile-caption{padding:6px 8px;display:flex;flex-direction:column;gap:2px}
+.tile-name{font:700 12px var(--font-display);color:#edf4fb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile-rarity{font-size:9px;font-weight:700;letter-spacing:.05em}
+.tile-check-icon{position:absolute;top:6px;right:6px;color:#101622;background:#ffcd67;border-radius:50%;padding:2px;z-index:3}
+.team-picker-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:48px 20px;color:#7e95ad}
+
+/* RESPONSIVE DESIGN FOR LOBBY */
+@media(max-width:1024px){
+ .lobby-hud{padding:14px 20px 20px}
+ .lobby-role-badges{bottom:104px;gap:12px}
+ .lobby-role-badge{min-width:160px;height:52px}
+ .badge-name{font-size:12px}
+ .lobby-fight-button{min-width:220px;height:60px}
+ .fight-text strong{font-size:20px}
+ .lobby-stage-card{min-width:210px}
+ .team-picker-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
+@media(max-width:768px){
+ .lobby-hud{padding:10px 14px 16px}
+ .lobby-top-strip{align-items:flex-start}
+ .lobby-quick-bar{display:none}
+ .lobby-role-badges{bottom:158px;gap:6px;padding:0 8px}
+ .lobby-role-badge{min-width:0;flex:1;height:48px;padding:4px 6px;gap:6px}
+ .badge-tag{min-width:28px;padding-right:4px}
+ .badge-tag strong{font-size:9px}
+ .badge-slot-num{display:none}
+ .badge-name{font-size:11px}
+ .badge-meta{font-size:9px;gap:4px}
+ .badge-swap-icon{display:none}
+ .lobby-action-deck{flex-direction:column;align-items:stretch;gap:10px}
+ .lobby-stage-card{max-width:none;width:100%}
+ .lobby-start-action{width:100%;align-items:stretch}
+ .lobby-mode-pills{width:100%;justify-content:space-between}
+ .mode-pill{flex:1;justify-content:center;font-size:10px;padding:0 6px}
+ .lobby-fight-button{width:100%;min-width:0;height:56px;justify-content:center}
+ .fight-text strong{font-size:18px}
+ .team-picker-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .hero-stats-row{gap:8px;font-size:10px}
+ .hero-skills-row{display:none}
+}

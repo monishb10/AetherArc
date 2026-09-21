@@ -41,7 +41,8 @@ type Mesh={source:Point[];weights:Influence[];uv:Float32Array;indices:Uint16Arra
 const meshes=new Map<string,Mesh>();
 function skin(frame:Frame,sprite:Sprite,img:HTMLImageElement,f:Fighter,time:number){
  const pose=samplePose(f,time).frame,stamp=Math.floor(f.clock*RIG_FPS),stride=Math.round(f.stride*15);
- const key=[frame.src,f.state,stamp,f.chain,stride,Math.floor(time*RIG_FPS),f.defeated?1:0].join(':');
+ const timeStep=f.state==='idle'?Math.floor((((time*2.1+f.c.seed)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)/(Math.PI*2))*32):Math.floor(time*RIG_FPS);
+ const key=[frame.src,f.state,stamp,f.chain,stride,timeStep,f.defeated?1:0].join(':');
  const found=cache.get(key);if(found)return found;
  const pad=Math.ceil(sprite.sourceHeight*.5),w=frame.w+pad*2,h=frame.h+pad*2;
  const rig=buildRig(f,pose,time),meshKey=frame.src+':'+f.c.style+':'+pose;
@@ -61,7 +62,7 @@ function skin(frame:Frame,sprite:Sprite,img:HTMLImageElement,f:Fighter,time:numb
  const rendered=gpu?.render(img,positions,mesh.uv,mesh.indices,w,h);
  if(rendered)c.drawImage(rendered,0,0);
  else{c.scale(2,2);for(let i=0;i<mesh.indices.length;i+=3){const [a,b,d]=Array.from(mesh.indices.slice(i,i+3));triangle(c,img,[mesh.source[a],mesh.source[b],mesh.source[d]],[dest[a],dest[b],dest[d]]);}}
- const out={canvas,pad};cache.set(key,out);if(cache.size>16)cache.delete(cache.keys().next().value!);return out;
+ const out={canvas,pad};cache.set(key,out);if(cache.size>160)cache.delete(cache.keys().next().value!);return out;
 }
 
 export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,time:number,extraScale=1,motion=1){
@@ -75,8 +76,11 @@ export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,ti
    if(index===9){ctx.rotate(f.koAngle*.3);ctx.translate(0,clip.height*.48);}
    else if(index===10)ctx.rotate(Math.max(-.16,f.koAngle*.10));
   }else if(['idle','victory'].includes(f.state)){
-   // Subtle chest movement between drawn poses, with feet anchored to the floor.
-   ctx.scale(1,1+Math.sin(time*2.2+f.c.seed)*.004*motion);
+   // Grounded idle battle stance: gentle chest breath expansion and subtle weight shift
+   const breath=Math.sin(time*2.2+f.c.seed)*motion;
+   const weightShift=Math.sin(time*1.3+f.c.seed*1.4)*motion;
+   ctx.rotate(weightShift*0.007);
+   ctx.scale(1+breath*0.0015,1+breath*0.005);
   }else if(f.state==='run')ctx.translate(0,-Math.abs(Math.sin(f.stride*2))*3*motion);
   if(f.flash>0)ctx.filter='brightness(1.8) saturate(.5)';
   if(f.state==='dodge')ctx.globalAlpha*=.72;

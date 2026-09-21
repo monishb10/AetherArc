@@ -60,7 +60,7 @@ function makeLobbyFighter(c: Character, level: number, mastery: number, x: numbe
   maxHp: s.hp,
   energy: 0,
   guard: 100,
-  state: 'idle',
+  state: 'lobbyIdle',
   clock: 0,
   duration: 0,
   attack: 0,
@@ -86,6 +86,21 @@ function makeLobbyFighter(c: Character, level: number, mastery: number, x: numbe
 
 const ROLE_NAMES = ['MAIN FIGHTER', 'SUPPORT · HEAL', 'TAG PARTNER'] as const;
 const ROLE_TAGS = ['MAIN', 'SUPPORT', 'TAG'] as const;
+
+interface LobbySlotConfig {
+ slot: 'support' | 'main' | 'tag';
+ roleIndex: number;
+ label: 'SUPPORT' | 'MAIN' | 'TAG';
+ roleTitle: string;
+ badgeNumber: string;
+ fighterId: string;
+ xPct: number;
+ scale: number;
+ depthOffset: number;
+ zIndex: number;
+ timingOffset: number;
+ freqRate: number;
+}
 
 export function Lobby({
  player,
@@ -117,7 +132,53 @@ export function Lobby({
  const lastFrameRef = useRef<number>(0);
  const particlesRef = useRef<Particle[]>([]);
  const entranceTimerRef = useRef<number>(0);
- const fighterPosRef = useRef<{x: number; y: number; width: number; height: number; slot: number}[]>([]);
+ const fighterPosRef = useRef<{x: number; y: number; width: number; height: number; roleIndex: number}[]>([]);
+
+ // Single source of truth for the 3 lobby slots: Left Support, Center Main, Right Tag
+ const lobbySlots: LobbySlotConfig[] = [
+  {
+   slot: 'support',
+   roleIndex: 1,
+   label: 'SUPPORT',
+   roleTitle: 'SUPPORT · HEAL',
+   badgeNumber: '01',
+   fighterId: team[1] || 'ichigo-kurosaki',
+   xPct: 24,
+   scale: 0.94,
+   depthOffset: -10,
+   zIndex: 1,
+   timingOffset: 2.1,
+   freqRate: 0.92
+  },
+  {
+   slot: 'main',
+   roleIndex: 0,
+   label: 'MAIN',
+   roleTitle: 'MAIN FIGHTER',
+   badgeNumber: '02',
+   fighterId: team[0] || 'naruto-uzumaki',
+   xPct: 50,
+   scale: 1.08,
+   depthOffset: 12,
+   zIndex: 2,
+   timingOffset: 0.0,
+   freqRate: 1.00
+  },
+  {
+   slot: 'tag',
+   roleIndex: 2,
+   label: 'TAG',
+   roleTitle: 'TAG PARTNER',
+   badgeNumber: '03',
+   fighterId: team[2] || 'tanjiro-kamado',
+   xPct: 76,
+   scale: 0.94,
+   depthOffset: -10,
+   zIndex: 1,
+   timingOffset: 4.3,
+   freqRate: 1.08
+  }
+ ];
 
  // Preload current team sprites and arena background
  useEffect(() => {
@@ -144,15 +205,15 @@ export function Lobby({
   };
   document.addEventListener('visibilitychange', handleVisibility);
 
-  const spawnElementAura = (x: number, y: number, element: Element, slot: number) => {
-   if (!particlesEnabled || particlesRef.current.length > 90) return;
+  const spawnElementAura = (x: number, y: number, element: Element) => {
+   if (!particlesEnabled || particlesRef.current.length > 80) return;
    const col = ELEMENT_COLORS[element] || '#6cecf2';
    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.4;
    const speed = 18 + Math.random() * 32;
    const life = 0.8 + Math.random() * 0.9;
    const isEmbers = element === 'fire' || element === 'sand';
    particlesRef.current.push({
-    x: x + (Math.random() - 0.5) * 80,
+    x: x + (Math.random() - 0.5) * 70,
     y: y - 20 - Math.random() * 140,
     vx: Math.cos(angle) * speed * 0.5,
     vy: Math.sin(angle) * speed * (isEmbers ? 1.2 : 0.8),
@@ -184,8 +245,7 @@ export function Lobby({
    // 1. Draw Arena Background with Depth
    const bg = arenaImage(arena);
    if (bg && bg.complete && bg.naturalWidth) {
-    // Subtle parallax float
-    const sway = motion ? Math.sin(time * 0.35) * 8 : 0;
+    const sway = motion ? Math.sin(time * 0.35) * 6 : 0;
     ctx.drawImage(bg, -20 + sway, -15, width + 40, height + 30);
    } else {
     const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
@@ -214,7 +274,7 @@ export function Lobby({
    // 2. Weather particles from arena
    if (particlesEnabled && arena.weather !== 'none') {
     const weather = arena.weather;
-    const wCount = weather === 'rain' ? 35 : 18;
+    const wCount = weather === 'rain' ? 30 : 16;
     ctx.save();
     for (let i = 0; i < wCount; i++) {
      const pSeed = i * 137.5;
@@ -254,93 +314,57 @@ export function Lobby({
     ctx.restore();
    }
 
-   // 3. Ground Plane & Stage Platform
-   const floorY = height * 0.77;
+   // 3. Ground Baseline Platform
+   const floorY = height * 0.90;
    const floorGrad = ctx.createLinearGradient(0, floorY - 30, 0, height);
    floorGrad.addColorStop(0, '#0e182800');
-   floorGrad.addColorStop(0.15, '#0b142499');
-   floorGrad.addColorStop(0.6, '#060b14eb');
+   floorGrad.addColorStop(0.2, '#0b142499');
+   floorGrad.addColorStop(0.7, '#060b14eb');
    floorGrad.addColorStop(1, '#04070ef8');
    ctx.fillStyle = floorGrad;
    ctx.fillRect(0, floorY - 30, width, height - floorY + 30);
 
    // Ground perspective depth ring
    ctx.save();
-   ctx.strokeStyle = '#6cecf218';
-   ctx.lineWidth = 1.5;
+   ctx.strokeStyle = '#6cecf215';
+   ctx.lineWidth = 1.4;
    ctx.beginPath();
-   ctx.ellipse(width * 0.5, floorY + 18, width * 0.44, 48, 0, 0, Math.PI * 2);
+   ctx.ellipse(width * 0.5, floorY + 12, width * 0.45, 42, 0, 0, Math.PI * 2);
    ctx.stroke();
    ctx.restore();
 
-   // 4. Staging Layout for the 3 Fighters
-   // Responsive spacing based on canvas width
+   // 4. Staging Layout for the 3 Fighters: Left (Support), Center (Main), Right (Tag)
    const isMobile = width < 768;
-   const spreadX = isMobile ? Math.min(130, width * 0.28) : Math.min(270, width * 0.22);
-   const centerX = width * 0.5;
-
-   // Main: slot 0 (center, foreground)
-   // Support: slot 1 (left, midground)
-   // Tag: slot 2 (right, midground)
-   const staging = [
-    {
-     slot: 1, // Support (rendered first / background-left)
-     x: centerX - spreadX,
-     y: floorY - 14,
-     scale: isMobile ? 0.84 : 0.92,
-     face: 1,
-     timingOffset: 2.1,
-     freqRate: 0.92,
-     depthAlpha: 0.94
-    },
-    {
-     slot: 2, // Tag (rendered second / background-right)
-     x: centerX + spreadX,
-     y: floorY - 14,
-     scale: isMobile ? 0.84 : 0.92,
-     face: -1, // Mirrored to face inward
-     timingOffset: 4.3,
-     freqRate: 1.08,
-     depthAlpha: 0.94
-    },
-    {
-     slot: 0, // Main (rendered last / center foreground)
-     x: centerX,
-     y: floorY + 12,
-     scale: isMobile ? 0.98 : 1.10,
-     face: 1,
-     timingOffset: 0,
-     freqRate: 1.0,
-     depthAlpha: 1.0
-    }
-   ];
-
+   const renderSlots = [...lobbySlots].sort((a, b) => a.zIndex - b.zIndex);
    fighterPosRef.current = [];
 
-   // Draw each fighter with shadow, elemental particles, and stance
-   for (const pos of staging) {
-    const charId = team[pos.slot] || CHARACTERS[pos.slot]?.id || 'naruto-uzumaki';
-    const c = byId(charId);
+   for (const s of renderSlots) {
+    const c = byId(s.fighterId);
     if (!c) continue;
+
+    const posX = width * (s.xPct / 100);
+    const posY = floorY + s.depthOffset;
+    const scale = s.scale * (isMobile ? 0.86 : 1.0);
 
     const prog = player.owned[c.id];
     const level = prog?.level ?? 1;
     const mastery = prog?.mastery ?? 0;
-    const f = makeLobbyFighter(c, level, mastery, pos.x, pos.y, pos.face);
-    const fighterH = 260; // approximate nominal height
+    const f = makeLobbyFighter(c, level, mastery, posX, posY, 1);
+    f.state = 'lobbyIdle';
+    const fighterH = 260;
 
-    // Record position for click detection
+    // Record position for click detection mapped to roleIndex
     fighterPosRef.current.push({
-     x: pos.x - 70 * pos.scale,
-     y: pos.y - fighterH * pos.scale,
-     width: 140 * pos.scale,
-     height: fighterH * pos.scale,
-     slot: pos.slot
+     x: posX - 65 * scale,
+     y: posY - fighterH * scale,
+     width: 130 * scale,
+     height: fighterH * scale,
+     roleIndex: s.roleIndex
     });
 
-    const isHovered = activeSlot === pos.slot;
-    const isSelected = editSlot === pos.slot;
-    const isEntering = entranceSlot === pos.slot && entranceTimerRef.current > 0;
+    const isHovered = activeSlot === s.roleIndex;
+    const isSelected = editSlot === s.roleIndex;
+    const isEntering = entranceSlot === s.roleIndex && entranceTimerRef.current > 0;
     const elementColor = ELEMENT_COLORS[c.element] || '#6cecf2';
 
     // A. Ground Contact Shadows
@@ -348,26 +372,26 @@ export function Lobby({
     // Ambient occlusion contact shadow (dark, tight at feet)
     ctx.fillStyle = '#000000dd';
     ctx.beginPath();
-    ctx.ellipse(pos.x, pos.y, 55 * pos.scale, 8 * pos.scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(posX, posY, 52 * scale, 7.5 * scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Diffuse cast shadow (softer, wider)
-    const shadowGrad = ctx.createRadialGradient(pos.x, pos.y, 10, pos.x, pos.y, 110 * pos.scale);
+    const shadowGrad = ctx.createRadialGradient(posX, posY, 8, posX, posY, 100 * scale);
     shadowGrad.addColorStop(0, '#00000088');
-    shadowGrad.addColorStop(0.5, '#00000044');
+    shadowGrad.addColorStop(0.5, '#00000038');
     shadowGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = shadowGrad;
     ctx.beginPath();
-    ctx.ellipse(pos.x, pos.y + 2, 105 * pos.scale, 18 * pos.scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(posX, posY + 2, 95 * scale, 16 * scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Soft elemental floor underglow
-    const elemGlow = ctx.createRadialGradient(pos.x, pos.y, 5, pos.x, pos.y, 90 * pos.scale);
+    const elemGlow = ctx.createRadialGradient(posX, posY, 4, posX, posY, 85 * scale);
     elemGlow.addColorStop(0, isSelected ? '#ffcd6755' : isHovered ? elementColor + '55' : elementColor + '20');
     elemGlow.addColorStop(1, 'transparent');
     ctx.fillStyle = elemGlow;
     ctx.beginPath();
-    ctx.ellipse(pos.x, pos.y + 1, 85 * pos.scale, 16 * pos.scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(posX, posY + 1, 80 * scale, 15 * scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Floor spotlight ring if hovered or selected
@@ -377,7 +401,7 @@ export function Lobby({
      ctx.shadowColor = isSelected ? '#ffcd67' : elementColor;
      ctx.shadowBlur = 14;
      ctx.beginPath();
-     ctx.ellipse(pos.x, pos.y, 75 * pos.scale, 14 * pos.scale, 0, 0, Math.PI * 2);
+     ctx.ellipse(posX, posY, 72 * scale, 13 * scale, 0, 0, Math.PI * 2);
      ctx.stroke();
      ctx.shadowBlur = 0;
     }
@@ -385,13 +409,13 @@ export function Lobby({
 
     // Spawn character-specific aura particles intermittently
     if (Math.random() < (isHovered ? 0.35 : 0.16)) {
-     spawnElementAura(pos.x, pos.y, c.element, pos.slot);
+     spawnElementAura(posX, posY, c.element);
     }
 
-    // B. Draw Illustrated Fighter with Independent Timing & Grounded Battle Stance
+    // B. Draw Illustrated Fighter in Upright Camera-Facing Battle Stance
     ctx.save();
-    const fighterTime = time * pos.freqRate + pos.timingOffset;
-    ctx.globalAlpha = pos.depthAlpha;
+    const fighterTime = time * s.freqRate + s.timingOffset;
+    ctx.globalAlpha = s.zIndex === 2 ? 1.0 : 0.96;
 
     if (isEntering) {
      const tProgress = 1 - entranceTimerRef.current / 0.45;
@@ -399,8 +423,8 @@ export function Lobby({
      ctx.globalAlpha = Math.min(1, tProgress * 1.5);
     }
 
-    // Draw the fighter using the mesh/clip skeletal system
-    drawIllustratedFighter(ctx, f, fighterTime, pos.scale, motion ? 1 : 0);
+    // Draw the upright front-facing fighter
+    drawIllustratedFighter(ctx, f, fighterTime, scale, motion ? 1 : 0);
     ctx.restore();
    }
 
@@ -414,7 +438,7 @@ export function Lobby({
      if (p.life <= 0) continue;
      p.x += p.vx * dt;
      p.y += p.vy * dt;
-     p.vy += 8 * dt; // gentle lift / gravity
+     p.vy += 8 * dt;
      const progress = 1 - p.life / p.maxLife;
      p.alpha = Math.sin(progress * Math.PI) * p.maxAlpha;
 
@@ -462,7 +486,7 @@ export function Lobby({
   };
  }, [team, arena, motion, particlesEnabled, activeSlot, editSlot, entranceSlot, player.owned]);
 
- // Handle click on the canvas to select a fighter
+ // Handle click on canvas character to open team editor
  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
   const canvas = canvasRef.current;
   if (!canvas) return;
@@ -481,7 +505,7 @@ export function Lobby({
    ) {
     sound.unlock();
     sound.play('click');
-    setEditSlot(f.slot);
+    setEditSlot(f.roleIndex);
     return;
    }
   }
@@ -504,7 +528,7 @@ export function Lobby({
     mouseY >= f.y - 20 &&
     mouseY <= f.y + f.height + 30
    ) {
-    found = f.slot;
+    found = f.roleIndex;
     break;
    }
   }
@@ -551,7 +575,41 @@ export function Lobby({
 
  return (
   <section className="cinematic-lobby" aria-label="Aether Arc Battle Lobby">
-   {/* Interactive 3-Fighter Canvas */}
+   {/* Tier 1: Pinned Header */}
+   <header className="lobby-top-strip">
+    <div className="lobby-brand-mark">
+     <div className="brand-title">
+      AETHER <span className="gold-text">ARC</span>
+     </div>
+     <span className="brand-subtitle">THE CONVERGENCE</span>
+    </div>
+
+    {/* Quick Access Bar */}
+    <div className="lobby-quick-bar">
+     <button className="quick-btn" onClick={onOpenRoster} aria-label="Open fighter roster">
+      <Users size={15} />
+      <span>ROSTER</span>
+      <small>{Object.keys(player.owned).length}/77</small>
+     </button>
+     <button className="quick-btn" onClick={onOpenBoxes} aria-label="Open box summoning">
+      <Box size={15} />
+      <span>SUMMON</span>
+      {Object.values(player.boxes).reduce((a, b) => a + b, 0) > 0 && (
+       <b className="notification-pill">{Object.values(player.boxes).reduce((a, b) => a + b, 0)}</b>
+      )}
+     </button>
+     <button className="quick-btn" onClick={onOpenMissions} aria-label="Open missions">
+      <Shield size={15} />
+      <span>MISSIONS</span>
+     </button>
+     <button className="quick-btn" onClick={onOpenRewards} aria-label="Open rewards">
+      <Sparkles size={15} />
+      <span>REWARDS</span>
+     </button>
+    </div>
+   </header>
+
+   {/* Tier 2: 3-Fighter Stage (Canvas with Arena and 3 Upright Camera-Facing Fighters) */}
    <div className="lobby-stage-container">
     <canvas
      ref={canvasRef}
@@ -561,157 +619,123 @@ export function Lobby({
      onMouseLeave={() => setActiveSlot(null)}
      style={{cursor: activeSlot !== null ? 'pointer' : 'default'}}
     />
-
-    {/* Grounded Floating Role Badges (Below Character Feet) */}
-    <div className="lobby-role-badges" aria-label="Team member roles">
-     {team.map((id, index) => {
-      const c = byId(id);
-      if (!c) return null;
-      const prog = player.owned[c.id];
-      const isSelected = editSlot === index;
-      const isHovered = activeSlot === index;
-      const roleName = ROLE_NAMES[index];
-      const roleTag = ROLE_TAGS[index];
-      const elemColor = ELEMENT_COLORS[c.element];
-
-      return (
-       <button
-        key={index}
-        className={`lobby-role-badge slot-${index} ${isSelected ? 'is-selected' : ''} ${isHovered ? 'is-hovered' : ''}`}
-        style={{'--element-color': elemColor} as React.CSSProperties}
-        onClick={() => {
-         sound.unlock();
-         sound.play('click');
-         setEditSlot(index);
-        }}
-        aria-label={`Edit ${roleName}: ${c.name}, Level ${prog?.level ?? 1}`}
-       >
-        <div className="badge-tag">
-         <span className="badge-slot-num">0{index + 1}</span>
-         <strong>{roleTag}</strong>
-        </div>
-        <div className="badge-info">
-         <span className="badge-name">{c.name}</span>
-         <span className="badge-meta">
-          <small>LV. {prog?.level ?? 1}</small>
-          <RarityLabel c={c} />
-         </span>
-        </div>
-        <span className="badge-swap-icon" title="Change fighter">
-         <RefreshCw size={13} />
-        </span>
-       </button>
-      );
-     })}
-    </div>
    </div>
 
-   {/* Lobby HUD & Control Deck */}
-   <div className="lobby-hud">
-    {/* Top Brand & Status Strip */}
-    <div className="lobby-top-strip">
-     <div className="lobby-brand-mark">
-      <div className="brand-title">
-       AETHER <span className="gold-text">ARC</span>
-      </div>
-      <span className="brand-subtitle">THE CONVERGENCE</span>
-     </div>
+   {/* Tier 3: Dedicated Name Cards Row (Directly below stage, perfectly centered under each fighter) */}
+   <div className="lobby-cards-row" aria-label="Selected battle team">
+    {lobbySlots.map(s => {
+     const c = byId(s.fighterId);
+     if (!c) return null;
+     const prog = player.owned[c.id];
+     const isSelected = editSlot === s.roleIndex;
+     const isHovered = activeSlot === s.roleIndex;
+     const elemColor = ELEMENT_COLORS[c.element];
 
-     {/* Compact Quick Access Bar */}
-     <div className="lobby-quick-bar">
-      <button className="quick-btn" onClick={onOpenRoster} aria-label="Open fighter roster">
-       <Users size={16} />
-       <span>ROSTER</span>
-       <small>{Object.keys(player.owned).length}/77</small>
-      </button>
-      <button className="quick-btn" onClick={onOpenBoxes} aria-label="Open box summoning">
-       <Box size={16} />
-       <span>SUMMON</span>
-       {Object.values(player.boxes).reduce((a, b) => a + b, 0) > 0 && (
-        <b className="notification-pill">{Object.values(player.boxes).reduce((a, b) => a + b, 0)}</b>
-       )}
-      </button>
-      <button className="quick-btn" onClick={onOpenMissions} aria-label="Open missions">
-       <Shield size={16} />
-       <span>MISSIONS</span>
-      </button>
-      <button className="quick-btn" onClick={onOpenRewards} aria-label="Open rewards">
-       <Sparkles size={16} />
-       <span>REWARDS</span>
-      </button>
-     </div>
-    </div>
-
-    {/* Bottom Action Core: Mode Selector, Stage Card, and Prominent Fight Button */}
-    <div className="lobby-action-deck">
-     {/* Left: Selected Battlefield Card */}
-     <div className="lobby-stage-card" onClick={onOpenStageSelect} role="button" tabIndex={0}>
-      <div className="stage-thumbnail">
-       <ArenaArt arena={arena} />
-      </div>
-      <div className="stage-details">
-       <span className="stage-eyebrow">
-        <Map size={12} /> BATTLEFIELD
-       </span>
-       <strong className="stage-title">{arena.name}</strong>
-       <span className="stage-anime">{arena.anime}</span>
-      </div>
-      <button className="change-stage-btn" onClick={onOpenStageSelect} aria-label="Change battlefield stage">
-       CHANGE <ChevronRight size={14} />
-      </button>
-     </div>
-
-     {/* Center: Mode Selector + Prominent START FIGHT Button */}
-     <div className="lobby-start-action">
-      <div className="lobby-mode-pills">
-       <button
-        className={`mode-pill ${mode === 'arcade' ? 'active' : ''}`}
-        onClick={() => onModeChange('arcade')}
-        aria-pressed={mode === 'arcade'}
-       >
-        <Swords size={14} /> Arcade
-       </button>
-       <button
-        className={`mode-pill ${mode === 'boss' ? 'active' : ''} ${wins < 3 ? 'is-locked' : ''}`}
-        onClick={() => onModeChange('boss')}
-        disabled={wins < 3}
-        aria-pressed={mode === 'boss'}
-       >
-        <Crown size={14} /> Elite Boss {wins < 3 && <small>(3 Wins)</small>}
-       </button>
-       <button
-        className={`mode-pill ${mode === 'tutorial' ? 'active' : ''}`}
-        onClick={() => onModeChange('tutorial')}
-        aria-pressed={mode === 'tutorial'}
-       >
-        <BookOpen size={14} /> Training
-       </button>
-      </div>
-
+     return (
       <button
-       className="lobby-fight-button"
-       disabled={busy}
-       onClick={() => onStartMatch(mode)}
-       aria-label={player.active ? 'Resume ongoing battle' : 'Start anime battle'}
+       key={s.slot}
+       className={`lobby-role-badge slot-${s.slot} ${isSelected ? 'is-selected' : ''} ${isHovered ? 'is-hovered' : ''}`}
+       style={{
+        left: `${s.xPct}%`,
+        transform: 'translateX(-50%)',
+        '--element-color': elemColor
+       } as React.CSSProperties}
+       onClick={() => {
+        sound.unlock();
+        sound.play('click');
+        setEditSlot(s.roleIndex);
+       }}
+       aria-label={`Edit ${s.roleTitle}: ${c.name}, Level ${prog?.level ?? 1}`}
       >
-       <span className="fight-btn-glow" />
-       <Swords size={26} className="fight-icon" />
-       <div className="fight-text">
-        <strong>{player.active ? 'RESUME FIGHT' : 'START FIGHT'}</strong>
-        <small>{mode === 'boss' ? 'ELITE DRAGON BATTLE' : mode === 'tutorial' ? 'PRACTICE ARENA' : 'ARCADE CONVERGENCE'}</small>
+       <div className="badge-tag">
+        <span className="badge-slot-num">{s.badgeNumber}</span>
+        <strong>{s.label}</strong>
        </div>
-       <ChevronRight size={22} className="fight-arrow" />
+       <div className="badge-info">
+        <span className="badge-name">{c.name}</span>
+        <span className="badge-meta">
+         <small>LV. {prog?.level ?? 1}</small>
+         <RarityLabel c={c} />
+        </span>
+       </div>
+       <span className="badge-swap-icon" title="Change fighter">
+        <RefreshCw size={13} />
+       </span>
       </button>
-     </div>
-    </div>
+     );
+    })}
    </div>
+
+   {/* Tier 4: Dedicated Action Deck (Arena card + Mode selector + Prominent START FIGHT) */}
+   <footer className="lobby-action-deck">
+    {/* Left: Selected Battlefield Card */}
+    <div className="lobby-stage-card" onClick={onOpenStageSelect} role="button" tabIndex={0}>
+     <div className="stage-thumbnail">
+      <ArenaArt arena={arena} />
+     </div>
+     <div className="stage-details">
+      <span className="stage-eyebrow">
+       <Map size={11} /> BATTLEFIELD
+      </span>
+      <strong className="stage-title">{arena.name}</strong>
+      <span className="stage-anime">{arena.anime}</span>
+     </div>
+     <button className="change-stage-btn" onClick={onOpenStageSelect} aria-label="Change battlefield stage">
+      CHANGE <ChevronRight size={13} />
+     </button>
+    </div>
+
+    {/* Center: Mode Selection Pills */}
+    <div className="lobby-mode-pills" role="radiogroup" aria-label="Game mode selection">
+     <button
+      className={`mode-pill ${mode === 'arcade' ? 'active' : ''}`}
+      onClick={() => onModeChange('arcade')}
+      aria-pressed={mode === 'arcade'}
+     >
+      <Swords size={13} /> Arcade
+     </button>
+     <button
+      className={`mode-pill ${mode === 'boss' ? 'active' : ''} ${wins < 3 ? 'is-locked' : ''}`}
+      onClick={() => onModeChange('boss')}
+      disabled={wins < 3}
+      aria-pressed={mode === 'boss'}
+     >
+      <Crown size={13} /> Elite Boss {wins < 3 && <small>(3 Wins)</small>}
+     </button>
+     <button
+      className={`mode-pill ${mode === 'tutorial' ? 'active' : ''}`}
+      onClick={() => onModeChange('tutorial')}
+      aria-pressed={mode === 'tutorial'}
+     >
+      <BookOpen size={13} /> Training
+     </button>
+    </div>
+
+    {/* Right: Prominent START FIGHT Button */}
+    <button
+     className="lobby-fight-button"
+     disabled={busy}
+     onClick={() => onStartMatch(mode)}
+     aria-label={player.active ? 'Resume ongoing battle' : 'Start anime battle'}
+    >
+     <span className="fight-btn-glow" />
+     <Swords size={22} className="fight-icon" />
+     <div className="fight-text">
+      <strong>{player.active ? 'RESUME FIGHT' : 'START FIGHT'}</strong>
+      <small>{mode === 'boss' ? 'ELITE DRAGON BATTLE' : mode === 'tutorial' ? 'PRACTICE ARENA' : 'ARCADE CONVERGENCE'}</small>
+     </div>
+     <ChevronRight size={20} className="fight-arrow" />
+    </button>
+   </footer>
 
    {/* Focused Team-Edit Panel Modal */}
    <Dialog open={editSlot !== null} onOpenChange={open => !open && setEditSlot(null)}>
     <DialogContent className="team-edit-dialog">
      <DialogTitle className="team-edit-title">
       <div className="dialog-header-slot">
-       <span className="slot-badge-gold">SLOT 0{editSlot !== null ? editSlot + 1 : 1}</span>
+       <span className="slot-badge-gold">
+        {editSlot === 0 ? 'MAIN FIGHTER' : editSlot === 1 ? 'SUPPORT FIGHTER' : 'TAG PARTNER'}
+       </span>
        <strong>{editSlot !== null ? ROLE_NAMES[editSlot] : 'TEAM MEMBER'}</strong>
       </div>
       <span className="dialog-subtitle">Select an owned legend to take into battle</span>

@@ -17,7 +17,21 @@ function load(src:string){
  const promise=new Promise<void>((resolve,reject)=>{img.onload=()=>resolve();img.onerror=()=>{images.delete(src);pending.delete(src);reject(new Error('Fighter artwork could not load. Please retry.'));};img.src=assetUrl(src);});
  pending.set(src,promise);return promise;
 }
-export async function prepareFighterSprites(ids:string[]){for(const id of ids)if(!sprites[id])throw new Error('This fighter’s artwork is missing. Please reload the game.');await Promise.all([...new Set(ids)].flatMap(id=>[...sprites[id].frames,...(fighterClips[id]?.frames??[])].map(f=>load(f.src))));}
+export const LOBBY_ART_IDS = new Set(['naruto-uzumaki', 'ichigo-kurosaki', 'tanjiro-kamado']);
+export function hasLobbyArt(id: string): boolean {
+ return LOBBY_ART_IDS.has(id);
+}
+export function lobbyArtSrc(id: string): string | undefined {
+ return LOBBY_ART_IDS.has(id) ? `/art/lobby/${id}.webp` : undefined;
+}
+export async function prepareFighterSprites(ids:string[]){
+ for(const id of ids)if(!sprites[id])throw new Error('This fighter’s artwork is missing. Please reload the game.');
+ const lobbyLoads = ids.filter(id => LOBBY_ART_IDS.has(id)).map(id => load(`/art/lobby/${id}.webp`));
+ await Promise.all([
+  ...[...new Set(ids)].flatMap(id=>[...sprites[id].frames,...(fighterClips[id]?.frames??[])].map(f=>load(f.src))),
+  ...lobbyLoads
+ ]);
+}
 export function fighterArt(id:string){const frame=fighterClips[id]?.frames[7]??sprites[id]?.frames[0];return frame?{...frame,src:assetUrl(frame.src)}:undefined;}
 export function fighterHeight(id:string){return sprites[id]?.height??260;}
 export function knockoutFloorOffset(id:string){const clip=fighterClips[id];if(clip){const f=clip.frames[11];return (f.h-f.ay-2)*clip.height/clip.sourceHeight;}const s=sprites[id];return s?Math.max(32,(s.frames[5].ax+6)*s.height/s.sourceHeight):70;}
@@ -66,16 +80,42 @@ function skin(frame:Frame,sprite:Sprite,img:HTMLImageElement,f:Fighter,time:numb
 }
 
 export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,time:number,extraScale=1,motion=1){
+ // 1. Dedicated Front-Facing Upright Lobby Artwork (Naruto, Ichigo, Tanjiro)
+ if(f.state==='lobbyIdle'&&hasLobbyArt(f.c.id)){
+  const src=`/art/lobby/${f.c.id}.webp`;
+  const img=images.get(src);
+  if(!img?.complete||!img.naturalWidth){
+   void load(src).catch(()=>{});
+  }else{
+   const targetH=fighterHeight(f.c.id)*1.14*extraScale;
+   const imgAspect=img.naturalWidth/img.naturalHeight;
+   const targetW=targetH*imgAspect;
+
+   ctx.save();
+   const breath=Math.sin(time*2.1+f.c.seed)*motion;
+   const weightShift=Math.sin(time*1.3+f.c.seed*1.4)*motion;
+   ctx.translate(f.x+weightShift*1.2,f.y);
+   ctx.scale(1+breath*0.002,1+breath*0.006);
+
+   if(f.flash>0)ctx.filter='brightness(1.8) saturate(.5)';
+   ctx.imageSmoothingEnabled=true;
+   ctx.imageSmoothingQuality='high';
+   ctx.drawImage(img,-targetW/2,-targetH,targetW,targetH);
+   ctx.restore();
+   return true;
+  }
+ }
+
  const clip=fighterClips[f.c.id];
  if(clip){
-  const index=clipFrame(f),frame=clip.frames[index],img=images.get(frame.src);
+  const index=f.state==='lobbyIdle'?0:clipFrame(f),frame=clip.frames[index],img=images.get(frame.src);
   if(!img?.complete||!img.naturalWidth){void load(frame.src).catch(()=>{});return true;}
   const scale=clip.height/clip.sourceHeight*extraScale;
-  ctx.save();ctx.translate(f.x,f.y);ctx.scale(f.face,1);
+  ctx.save();ctx.translate(f.x,f.y);ctx.scale(f.state==='lobbyIdle'?1:f.face,1);
   if(f.defeated){
    if(index===9){ctx.rotate(f.koAngle*.3);ctx.translate(0,clip.height*.48);}
    else if(index===10)ctx.rotate(Math.max(-.16,f.koAngle*.10));
-  }else if(['idle','victory'].includes(f.state)){
+  }else if(['idle','victory','lobbyIdle'].includes(f.state)){
    // Grounded idle battle stance: gentle chest breath expansion and subtle weight shift
    const breath=Math.sin(time*2.2+f.c.seed)*motion;
    const weightShift=Math.sin(time*1.3+f.c.seed*1.4)*motion;
@@ -91,11 +131,12 @@ export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,ti
  const p=samplePose(f,time);
  // The shared rig is calibrated to the planted ready pose. Bending an already
  // tucked movement painting a second time collapses its legs into a floating pose.
- if(f.state==='run')p.frame=0;
+ if(f.state==='run'||f.state==='lobbyIdle')p.frame=0;
+ if(f.state==='lobbyIdle'){p.lean=0;p.bob=0;p.crouch=0;}
  const frame=sprite.frames[p.frame],img=images.get(frame.src);
  if(!img?.complete||!img.naturalWidth){void load(frame.src).catch(()=>{});return true;}
  const scale=sprite.height/sprite.sourceHeight*extraScale;
- ctx.save();ctx.translate(f.x,f.y);ctx.scale(f.face,1);
+ ctx.save();ctx.translate(f.x,f.y);ctx.scale(f.state==='lobbyIdle'?1:f.face,1);
  if(f.defeated){ctx.rotate(f.koAngle);ctx.translate(0,sprite.height*.48);}
  else{ctx.translate(0,p.bob*sprite.height*motion);ctx.translate(0,-sprite.height*.46);ctx.rotate(p.lean*.3);ctx.translate(0,sprite.height*.46);}
  ctx.scale(scale,scale);

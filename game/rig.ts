@@ -59,7 +59,15 @@ export function buildRig(f:Fighter,pose:number,time:number):Rig {
   if(f.state==='special'){body=0;lu=-.23*wind;ru=.23*wind;ll=-.2*wind;rl=.2*wind;}
  }else if(f.state==='ultimate'){
   const charge=1-smooth((f.clock-.7)/.35);lu=-charge*.18;ru=charge*.14;ll=-charge*.12;rl=charge*.12;body=.02*(1-charge);hipY=.015*charge;
-  }else{
+ }else if(f.state==='lobbyIdle'){
+  // Upright, camera-facing ready stance: neutral spine, relaxed shoulders, planted feet
+  const weightShift=Math.sin(time*1.35+f.c.seed*1.4);
+  body=breath*.003+weightShift*.003;
+  headAngle=-breath*.002;
+  lu=breath*.006-weightShift*.003;ru=-breath*.006-weightShift*.003;
+  ll=breath*.002;rl=-breath*.002;
+  hipY=breath*.001;hipX=weightShift*.002;
+ }else{
    const weightShift=Math.sin(time*1.35+f.c.seed*1.4);
    body=breath*.005+weightShift*.006;headAngle=-breath*.004-weightShift*.005;
    lu=breath*.010-weightShift*.006;ru=-breath*.012-weightShift*.006;

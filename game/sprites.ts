@@ -11,12 +11,45 @@ type Sprite={height:number;sourceHeight:number;frames:Frame[]};
 const sprites:Record<string,Sprite>=manifest;
 const images=new Map<string,HTMLImageElement>();
 const pending=new Map<string,Promise<void>>();
+
 function load(src:string){
  if(pending.has(src))return pending.get(src)!;
+ const existingImg=images.get(src);
+ if(existingImg&&existingImg.complete&&existingImg.naturalWidth>0&&existingImg.naturalHeight>0){
+  return Promise.resolve();
+ }
  const img=new Image();images.set(src,img);
- const promise=new Promise<void>((resolve,reject)=>{img.onload=()=>resolve();img.onerror=()=>{images.delete(src);pending.delete(src);reject(new Error('Fighter artwork could not load. Please retry.'));};img.src=assetUrl(src);});
- pending.set(src,promise);return promise;
+ const resolvedUrl=assetUrl(src);
+ const promise=new Promise<void>((resolve,reject)=>{
+  img.onload=()=>{
+   const validDimensions=typeof img.naturalWidth==='number'?img.naturalWidth>0&&img.naturalHeight>0:true;
+   if(validDimensions){
+    resolve();
+   }else{
+    images.delete(src);
+    pending.delete(src);
+    const err=new Error(`Fighter artwork has invalid dimensions: ${src}. Please retry.`);
+    if(typeof console!=='undefined'&&console.error){
+     console.error('[AetherArc Asset Error] Fighter image has invalid dimensions:',{src,resolvedUrl,width:img.naturalWidth,height:img.naturalHeight});
+    }
+    reject(err);
+   }
+  };
+  img.onerror=()=>{
+   images.delete(src);
+   pending.delete(src);
+   const err=new Error('Fighter artwork could not load. Please retry.');
+   if(typeof console!=='undefined'&&console.error){
+    console.error('[AetherArc Asset Error] Failed to load fighter artwork:',{src,resolvedUrl});
+   }
+   reject(err);
+  };
+  img.src=resolvedUrl;
+ });
+ pending.set(src,promise);
+ return promise;
 }
+
 export const LOBBY_ART_IDS = new Set(['naruto-uzumaki', 'ichigo-kurosaki', 'tanjiro-kamado']);
 export interface LobbyAnchor {
  anchorX: number;
@@ -34,10 +67,12 @@ export function lobbyArtSrc(id: string): string | undefined {
  return LOBBY_ART_IDS.has(id) ? `/art/lobby/${id}.webp` : undefined;
 }
 export async function prepareFighterSprites(ids:string[]){
- for(const id of ids)if(!sprites[id])throw new Error('This fighter’s artwork is missing. Please reload the game.');
- const lobbyLoads = ids.filter(id => LOBBY_ART_IDS.has(id)).map(id => load(`/art/lobby/${id}.webp`));
+ const sanitizedIds=ids.map(id=>typeof id==='string'?id.trim():'').filter(id=>id.length>0);
+ for(const id of sanitizedIds)if(!sprites[id])throw new Error(`This fighter’s artwork is missing: ${id}. Please reload the game.`);
+ const uniqueIds=[...new Set(sanitizedIds)];
+ const lobbyLoads = uniqueIds.filter(id => LOBBY_ART_IDS.has(id)).map(id => load(`/art/lobby/${id}.webp`));
  await Promise.all([
-  ...[...new Set(ids)].flatMap(id=>[...sprites[id].frames,...(fighterClips[id]?.frames??[])].map(f=>load(f.src))),
+  ...uniqueIds.flatMap(id=>[...sprites[id].frames,...(fighterClips[id]?.frames??[])].map(f=>load(f.src))),
   ...lobbyLoads
  ]);
 }

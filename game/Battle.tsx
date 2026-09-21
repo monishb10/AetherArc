@@ -26,17 +26,18 @@ export function Battle({match,player,prefs,onEnd,onLeave}:{match:MatchConfig;pla
   let cancelled=false;
   setAssetError('');
   setSnapshot(null);
-  const oppTeam=match.opponentTeam&&match.opponentTeam.length>=3?match.opponentTeam:[match.opponent,'sasuke-uchiha','kakashi-hatake'];
-  const allFighterIds=Array.from(new Set([...match.team,...oppTeam]));
+  const oppTeam=(match.opponentTeam&&match.opponentTeam.length>=3?match.opponentTeam:[match.opponent,'sasuke-uchiha','kakashi-hatake']).filter(Boolean);
+  const allFighterIds=Array.from(new Set([...match.team,...oppTeam])).filter(Boolean);
+  const arenaDef=ARENAS.find(a=>a.id===match.arena)||ARENAS[0];
   Promise.all([
    prepareFighterSprites(allFighterIds),
-   prepareArenaArt(ARENAS.find(a=>a.id===match.arena)!)
+   prepareArenaArt(arenaDef)
   ]).then(()=>{
    if(cancelled)return;
    const e=new BattleEngine(
     canvas.current!,
     match,
-    ARENAS.find(a=>a.id===match.arena)!,
+    arenaDef,
     player.owned,
     sound,
     setSnapshot,

@@ -80,3 +80,12 @@ The easiest development loop is now `pnpm dev:pages`. It runs `standalone/main.t
 `game/rig.ts` now supplies a forward-kinematics rig with 11 bones: torso/neck/head and two segments per arm and leg. Run cycles alternate thigh and knee movement; strikes, guard, recoil, jump, and defeat have their own joint angles. Bone lengths remain fixed. Adjust `buildRig()` joint placements or angles to fit a new character costume.
 
 `game/sprites.ts` assigns normalized weights on a 20×28 mesh and transforms vertices using that rig. `game/mesh-renderer.ts` rasterizes the mesh through one shared WebGL context at 2x resolution for cleaner edges, with a Canvas 2D fallback. Texture and frame caches are bounded. This improves edge rendering; it does not invent missing detail in the source painting. Add higher-resolution source frames when you need more painted detail.
+
+
+## Combat upgrade tuning
+
+`game/balance.ts` centralizes health, damage, energy, movement acceleration, stride distance, and CPU difficulty profiles. Health tuning is shared with roster stats. CPU decision-making is in `BattleEngine.controlEnemy()`; defense reacts after a visible windup and is probabilistic. Heavy attacks defeat guard, while dodge has a cooldown.
+
+The run rig now uses `solveLeg()` and `gaitFoot()` in `game/rig.ts` for a stance phase and recovery arc. Keep shoe soles level in `skinPoint()`. The painted starter clips retain their dedicated four-pose cycles; reverse travel reverses that sequence. The lab uses `gaitVelocity` to preview movement in place without moving the fighter across the stage.
+
+Run `pnpm test:game` to check the original progression/combat cases, new tactical regression cases, fixed-length limb and foot-ground checks, and eight deterministic full matches. `tests/match-pacing.cjs` contains the scripted player policy and seeds; its timing measures that policy, not every possible human match.

@@ -1,0 +1,22 @@
+AETHER ARC - COMBAT UPGRADE
+
+1. Extract this whole ZIP first.
+2. Install Node.js 22.13 or newer if you do not have it.
+3. On Windows, double-click PLAY.bat inside AetherArc.
+4. Keep the terminal open while playing.
+
+Other systems: node scripts/play.mjs
+The launcher opens http://127.0.0.1:4174/
+Do not open play/index.html directly.
+
+Move: A / D       Light: J       Heavy: K
+Block: S          Jump: Space    Dodge: Shift
+Dash: X           Skills: Q / E  Awaken: R
+Ultimate: F       Reserve after KO: 1 / 2 / 3
+Pause: Escape
+
+Options -> Challenge: Rookie / Fighter / Veteran
+
+This ZIP includes the playable build and editable source.
+For development and GitHub Pages publishing, see README.md.
+For changes and test results, see UPDATE-NOTES.md.

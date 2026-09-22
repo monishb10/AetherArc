@@ -6,16 +6,17 @@ import { GameAudio } from './audio';
 import { drawIllustratedFighter, fighterHeight, knockoutFloorOffset } from './sprites';
 import { GROUND, moveFor, ultimateFor, smooth } from './motion';
 import { drawCombatEffect, drawCharge, drawUltimate, type CombatEffect } from './effects';
+import { COMBAT_BALANCE, challenge } from './balance';
 
 export type Action='light'|'heavy'|'dash'|'dodge'|'jump'|'skill1'|'skill2'|'special'|'ultimate'|'support'|'tag';
-export type Fighter={c:Character;level:number;mastery:number;x:number;y:number;vx:number;vy:number;face:number;hp:number;maxHp:number;energy:number;guard:number;state:string;clock:number;duration:number;attack:number;chain:number;chainTimer:number;hit:boolean;stun:number;invincible:number;flash:number;cooldowns:Record<string,number>;combo:number;comboTimer:number;buff:number;trailClock:number;defeated:boolean;stride:number;koAngle:number;koBounces:number;koGrounded:boolean;lastImpact:number};
+export type Fighter={c:Character;level:number;mastery:number;x:number;y:number;vx:number;vy:number;face:number;hp:number;maxHp:number;energy:number;guard:number;state:string;clock:number;duration:number;attack:number;chain:number;chainTimer:number;hit:boolean;stun:number;invincible:number;flash:number;cooldowns:Record<string,number>;combo:number;comboTimer:number;buff:number;trailClock:number;defeated:boolean;stride:number;koAngle:number;koBounces:number;koGrounded:boolean;lastImpact:number;gaitVelocity?:number};
 type Particle={x:number;y:number;vx:number;vy:number;life:number;max:number;size:number;color:string;kind:number};
 type Effect=CombatEffect;
 type Projectile={x:number;y:number;vx:number;owner:Fighter;life:number;size:number;damage:number;color:string;style:string};
 type Damage={x:number;y:number;text:string;life:number;color:string};
 
 export type BattleReport={won:boolean;draw?:boolean;combos:number;ultimates:number;used:string[];duration:number;damage:number};
-export type TeamFighterSnapshot={id:string;name:string;hp:number;maxHp:number;energy:number;level:number;defeated:boolean;active:boolean;element:string};
+export type TeamFighterSnapshot={id:string;name:string;hp:number;maxHp:number;energy:number;level:number;defeated:boolean;active:boolean;element:Character['element']};
 export type BattleSnapshot={
  player:{hp:number;maxHp:number;energy:number;guard:number;id:string;level:number};
  enemy:{hp:number;maxHp:number;energy:number;id:string;level:number};
@@ -53,7 +54,7 @@ export class BattleEngine{
  trails:{x:number;y:number;life:number;f:Fighter;state:string;clock:number}[]=[];
  time=0;elapsed=0;seconds=99;intro=3.4;phase='intro';paused=false;pauseReason='';
  shake=0;hitStop=0;flash=0;cinema:{fighter:Fighter;time:number;hit:boolean}|null=null;
- ai=0;raf=0;last=0;snapshotAt=0;done=false;endTimer=0;knockoutTimer=0;replacementTimer=0;
+ ai=0;aiMove=0;raf=0;last=0;snapshotAt=0;done=false;endTimer=0;knockoutTimer=0;replacementTimer=0;
  replacementAnnouncement='';drawMatch=false;
  comboCount=0;ultCount=0;damage=0;used=new Set<string>();
  tutorial=0;tutorialFlags=new Set<string>();tutorialDelay=0;difficulty=1;reduced=false;effectsLevel=true;
@@ -63,7 +64,7 @@ export class BattleEngine{
 
  constructor(canvas:HTMLCanvasElement,match:MatchConfig,arena:Arena,owned:Record<string,FighterProgress>,audio:GameAudio,onSnapshot:(s:BattleSnapshot)=>void,onEnd:(s:BattleReport)=>void,opts:{difficulty:number;reduced:boolean;effects:boolean}){
   this.canvas=canvas;this.ctx=canvas.getContext('2d')!;this.match=match;this.arena=arena;this.owned=owned;this.audio=audio;this.onSnapshot=onSnapshot;this.onEnd=onEnd;
-  this.difficulty=opts.difficulty;this.reduced=opts.reduced;this.effectsLevel=opts.effects;
+  this.difficulty=challenge(opts.difficulty).difficulty;this.reduced=opts.reduced;this.effectsLevel=opts.effects;
 
   const pTeamIds=match.team&&match.team.length>=3?match.team.slice(0,3):[match.team[0],'ichigo-kurosaki','tanjiro-kamado'];
   this.playerTeam=pTeamIds.map((id,idx)=>{
@@ -85,7 +86,7 @@ export class BattleEngine{
   }
   this.enemyTeam=oppIds.map((id,idx)=>{
    const c=byId(id);
-   const f=makeFighter(c,oppLvs[idx],idx===0?950:1800);
+   const f=makeFighter(c,oppLvs[idx]??match.opponentLevel??1,idx===0?950:1800);
    if(match.mode==='boss'&&idx===0){
     f.maxHp=Math.round(f.maxHp*1.45);
     f.hp=f.maxHp;
@@ -174,7 +175,7 @@ export class BattleEngine{
  say(s:string){this.message=s;this.messageTime=2.2;}
 
  input(a:Action){
-  if(this.paused||this.done||this.intro>0)return;
+  if(this.paused||this.done||this.intro>0||!['intro','fight'].includes(this.phase))return;
   if(this.p.stun>0||['light','heavy','skill1','skill2','special','ultimate'].includes(this.p.state)){
    if(['light','heavy','dodge','skill1','skill2'].includes(a))this.buffer={a,life:.32};
    return;
@@ -352,7 +353,7 @@ export class BattleEngine{
       this.e=this.enemyTeam[nextE];
       this.e.x=950;this.e.y=GROUND;this.e.vx=0;this.e.vy=0;this.e.state='idle';this.e.clock=0;this.e.face=-1;this.e.invincible=1.3;
       this.p.x=330;this.p.y=GROUND;this.p.vx=0;this.p.vy=0;this.p.state='idle';this.p.clock=0;this.p.face=1;this.p.invincible=1.3;
-      this.projectiles=[];this.buffer=null;this.keys.clear();
+      this.projectiles=[];this.buffer=null;this.keys.clear();this.ai=0.25;this.aiMove=0;
       this.phase='replacement_intro';
       this.replacementTimer=1.3;
       this.replacementAnnouncement=`${this.e.c.name.toUpperCase()} ENTERS THE ARENA!`;
@@ -366,8 +367,8 @@ export class BattleEngine{
   }
 
   if(this.phase==='choose_replacement'){
-   this.p.clock+=dt;
-   this.e.clock+=dt;
+   this.updateKnockout(this.p,dt);
+   this.updateKnockout(this.e,dt);
    return;
   }
 
@@ -474,7 +475,7 @@ export class BattleEngine{
   this.p.x=330;this.p.y=GROUND;this.p.vx=0;this.p.vy=0;this.p.state='idle';this.p.clock=0;this.p.face=1;this.p.invincible=1.3;
   this.e.x=950;this.e.y=GROUND;this.e.vx=0;this.e.vy=0;this.e.state='idle';this.e.clock=0;this.e.face=-1;this.e.invincible=1.3;
 
-  this.projectiles=[];this.buffer=null;this.keys.clear();
+  this.projectiles=[];this.buffer=null;this.keys.clear();this.ai=0.25;this.aiMove=0;
   this.phase='replacement_intro';
   this.replacementTimer=1.3;
   this.replacementAnnouncement=`${this.p.c.name.toUpperCase()} ENTERS THE ARENA!`;
@@ -499,8 +500,12 @@ export class BattleEngine{
   if(block&&f.guard>1&&f.y>=GROUND){
    f.state='block';f.vx=0;
   }else{
-   f.vx=move*stats(f.c,f.level,f.mastery).speed;
-   if(f.y>=GROUND)f.state=move?'run':'idle';
+   const speed=stats(f.c,f.level,f.mastery).speed;
+   const backwards=move*f.face<0;
+   const target=move*speed*(backwards?.76:1);
+   f.vx=lerp(f.vx,target,1-Math.exp(-dt*(move?COMBAT_BALANCE.acceleration:COMBAT_BALANCE.braking)));
+   if(Math.abs(f.vx)<5)f.vx=0;
+   if(f.y>=GROUND)f.state=f.vx?'run':'idle';
    if(move)this.tutorialFlags.add('move');
   }
   f.face=this.e.x>f.x?1:-1;
@@ -516,36 +521,65 @@ export class BattleEngine{
    }
    return;
   }
-  const f=this.e;
-  if(!this.canAct(f))return;
-  const distance=Math.abs(f.x-this.p.x),dir=this.p.x>f.x?1:-1;
-  f.face=dir;
+  const f=this.e,p=this.p,profile=challenge(this.difficulty);
   this.ai-=dt;
-  if(this.ai>0){if(f.state==='block')f.vx=0;return;}
-  this.ai=(.24+Math.random()*.38)/this.difficulty;
-  const roll=Math.random();
-  if(this.p.state==='ultimate')return;
-  if(this.p.state==='heavy'&&distance<180&&roll<.45*this.difficulty){f.state='block';f.vx=0;return;}
-  if(f.energy>=100&&roll<.3){this.act(f,'ultimate');return;}
-  if(distance>180){
-   f.vx=dir*stats(f.c,f.level).speed*.66;
-   f.state='run';
-   if(distance>280&&roll<.3&&f.cooldowns.skill1<=0)this.act(f,'skill1');
-   if(roll>.91&&f.cooldowns.dash<=0)this.act(f,'dash');
-  }else{
-   f.vx=0;
-   if(roll<.55)this.act(f,'light');
-   else if(roll<.72)this.act(f,'heavy');
-   else if(roll<.86&&f.cooldowns.skill2<=0)this.act(f,'skill2');
-   else if(roll<.94&&f.cooldowns.skill1<=0)this.act(f,'skill1');
-   else if(f.cooldowns.dodge<=0)this.act(f,'dodge');
+  if(!this.canAct(f))return;
+  const s=stats(f.c,f.level,f.mastery),distance=Math.abs(f.x-p.x),dir=p.x>f.x?1:-1;
+  const ranged=['beam','mage'].includes(f.c.style),reach=s.range+18;
+  f.face=dir;
+  const steer=(velocity:number)=>{
+   this.aiMove=velocity;
+   f.vx=lerp(f.vx,velocity,1-Math.exp(-dt*COMBAT_BALANCE.acceleration));
+   if(Math.abs(f.vx)<5)f.vx=0;
+   if(f.y>=GROUND)f.state=f.vx?'run':'idle';
+  };
+  const attack=(action:Action)=>{this.aiMove=0;return this.act(f,action);};
+  if(this.ai>0){
+   if(f.state==='block'){f.vx=0;return;}
+   // Stop at striking distance instead of running through the other fighter.
+   steer(this.aiMove*dir>0&&distance<reach*.85?0:this.aiMove);
+   return;
   }
+  this.ai=profile.decision+Math.random()*.12;
+  const roll=Math.random();
+  const incoming=this.projectiles.some(pr=>pr.owner===p&&(pr.x-f.x)*pr.vx<0&&Math.abs(pr.x-f.x)<220);
+  const winding=['light','heavy','skill1','skill2'].includes(p.state)&&!p.hit&&p.clock>=profile.reaction;
+  const threatened=incoming||(winding&&distance<(p.state==='light'?170:p.state==='heavy'?205:390));
+  if(threatened&&roll<profile.defense){
+   if((incoming||p.state==='heavy'||f.guard<30)&&f.cooldowns.dodge<=0){
+    attack('dodge');f.vx=-dir*580;this.ai=.28;return;
+   }
+   if(f.guard>25&&p.state!=='heavy'){this.aiMove=0;f.state='block';f.vx=0;this.ai=.20+Math.random()*.16;return;}
+  }
+  if(f.energy>=100&&distance<650&&roll<.58){attack('ultimate');return;}
+  if(f.hp<f.maxHp*.55&&f.cooldowns.special<=0&&distance<280&&roll<.23){attack('special');return;}
+  // A visible missed strike exposes a recovery window, rather than giving the
+  // CPU instant knowledge of future inputs.
+  if(distance<reach&&p.hit&&['heavy','skill1','skill2'].includes(p.state)){
+   attack('light');this.ai=.10;return;
+  }
+  if(distance<reach){
+   if(p.state==='block'&&roll<.78){attack('heavy');return;}
+   if(f.combo>=3&&roll<.35){steer(-dir*s.speed*.58);this.ai=.25;return;}
+   if(roll<.57){attack('light');this.ai=.08;}
+   else if(roll<.78)attack('heavy');
+   else if(f.cooldowns.skill2<=0)attack('skill2');
+   else if(f.cooldowns.skill1<=0)attack('skill1');
+   else attack('light');
+   return;
+  }
+  if(distance<550&&distance>reach&&f.cooldowns.skill1<=0&&roll<(ranged?.65:.28)){
+   attack('skill1');return;
+  }
+  if(distance<360&&f.cooldowns.skill2<=0&&roll<.18){attack('skill2');return;}
+  if(distance>440&&f.cooldowns.dash<=0&&roll>.80){attack('dash');return;}
+  steer(dir*s.speed*profile.speed);
  }
 
  updateFighter(f:Fighter,dt:number){
   const other=f===this.p?this.e:this.p;
   f.clock+=dt;f.trailClock+=dt;
-  if(f.state==='run')f.stride+=Math.abs(f.vx)*dt*.065;
+  if(f.state==='run')f.stride+=Math.abs(f.gaitVelocity??f.vx)*dt*Math.PI*2/COMBAT_BALANCE.strideDistance;
   f.stun=Math.max(0,f.stun-dt);
   f.invincible=Math.max(0,f.invincible-dt);
   f.flash=Math.max(0,f.flash-dt);
@@ -555,7 +589,7 @@ export class BattleEngine{
   f.chainTimer-=dt;
   for(const k of Object.keys(f.cooldowns))f.cooldowns[k]=Math.max(0,f.cooldowns[k]-dt);
   if(f.state==='block')f.guard=Math.max(0,f.guard-dt*10);else f.guard=Math.min(100,f.guard+dt*17);
-  f.energy=Math.min(100,f.energy+dt*1.2);
+  f.energy=Math.min(100,f.energy+dt*COMBAT_BALANCE.passiveEnergy);
 
   if(f.stun>0){f.state='hit';f.vx*=Math.pow(.015,dt);}
   else if(f.state==='hit'){f.state='idle';f.vx=0;}
@@ -623,7 +657,8 @@ export class BattleEngine{
   if(target.invincible>0||target.defeated)return;
   const guarded=target.state==='block'&&target.guard>12&&kind!=='ultimate'&&kind!=='heavy';
   const defense=stats(target.c,target.level,target.mastery).defense;
-  let dmg=Math.max(4,Math.round(raw*(100/(100+defense*.55))*(attacker.buff>0?1.15:1)*(attacker===this.e?.78*this.difficulty:1)));
+  const scaling=kind==='ultimate'?1:Math.max(.52,1-Math.max(0,attacker.combo-2)*.10);
+  let dmg=Math.max(4,Math.round(raw*COMBAT_BALANCE.damageMultiplier*scaling*(100/(100+defense*.55))*(attacker.buff>0?1.15:1)*(attacker===this.e?challenge(this.difficulty).damage:1)));
   if(guarded){
    dmg=Math.round(dmg*.12);
    target.hp=Math.max(0,target.hp-dmg);
@@ -636,7 +671,7 @@ export class BattleEngine{
    target.hp=Math.max(0,target.hp-dmg);
    if(this.match.mode==='tutorial'&&this.tutorial<5&&target===this.e)target.hp=Math.max(350,target.hp);
    target.lastImpact=kind==='ultimate'?2:kind==='heavy'?1.5:1;
-   target.stun=kind==='ultimate'?.75:kind==='heavy'?.56:.24;
+   target.stun=kind==='ultimate'?.65:kind==='heavy'?.44:.19;
    target.state='hit';
    target.clock=0;
    target.flash=.13;
@@ -649,8 +684,8 @@ export class BattleEngine{
     this.damage+=dmg;
     if(attacker.combo%3===0){this.comboCount++;this.tutorialFlags.add('combo');}
    }
-   attacker.energy=Math.min(100,attacker.energy+(kind==='light'?10:kind==='ultimate'?0:16));
-   target.energy=Math.min(100,target.energy+5);
+   attacker.energy=Math.min(100,attacker.energy+(kind==='light'?COMBAT_BALANCE.lightEnergy:kind==='ultimate'?0:COMBAT_BALANCE.skillEnergy));
+   target.energy=Math.min(100,target.energy+COMBAT_BALANCE.receivedEnergy);
    this.hitStop=this.reduced?.018:kind==='ultimate'?.11:kind==='heavy'?.075:.045;
    this.shake=this.reduced?0:kind==='ultimate'?20:kind==='heavy'?10:4;
    this.flash=kind==='heavy'?.12:.035;

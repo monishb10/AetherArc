@@ -51,7 +51,7 @@ export function samplePose(f:Fighter,time:number):Pose {
  const p={...neutral},cycle=Math.sin(f.stride),lift=Math.cos(f.stride);
  if(f.defeated){p.frame=5;p.crouch=.09*smooth(f.clock/.4);p.arms=-.10;p.legs=.04*Math.exp(-f.clock*2);p.head=.035;p.cloth=Math.sin(f.clock*9)*.02*Math.exp(-f.clock*2);return p;}
  if(f.state==='run'){
-  p.frame=1;p.lean=.09;p.bob=-Math.abs(lift)*.016;p.crouch=.024;p.legs=cycle*.09;p.arms=-cycle*.038;p.twist=-cycle*.012;p.cloth=Math.sin(f.stride-1)*.018;return p;
+  p.frame=1;p.lean=(f.vx*f.face<0?-.018:.026);p.bob=0;p.crouch=.012;p.legs=cycle*.035;p.arms=-cycle*.018;p.twist=-cycle*.006;p.cloth=Math.sin(f.stride-1)*.010;return p;
  }
  if(f.state==='dash'||f.state==='dodge'){
   p.frame=4;p.lean=.10;p.crouch=.04;p.arms=-.035;p.legs=-.025;p.cloth=.035;return p;

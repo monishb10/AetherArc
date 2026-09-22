@@ -1,3 +1,4 @@
+import { COMBAT_BALANCE } from './balance';
 export type Rarity = 'Common'|'Rare'|'Epic'|'Gold'|'Mythic'|'Legendary'|'Aether';
 export type Style = 'ninja'|'sword'|'assassin'|'brawler'|'brute'|'mage'|'monk'|'beam';
 export type Element = 'fire'|'water'|'ice'|'forest'|'lightning'|'shadow'|'energy'|'wind'|'sand';
@@ -1475,7 +1476,7 @@ export const UNIVERSES=["Naruto", "One Piece", "Bleach", "Black Clover", "Demon 
 export const byId=(id:string)=>CHARACTERS.find(c=>c.id===id)!;
 export const MAX_LEVEL=30;
 export const xpRequired=(level:number)=>Math.round(160+level*80+level*level*8);
-export function stats(c:Character,level=1,mastery=0){const base=STYLE_STATS[c.style],m=1+(level-1)*.045+RARITIES.indexOf(c.rarity)*.025+mastery*.025;const hp=Math.round(base.hp*m),attack=Math.round(base.atk*m),defense=Math.round(base.def*m);return {hp,attack,defense,power:Math.round(hp*.32+attack*5+defense*3),speed:base.speed+(level-1)*.6,range:base.range,rate:base.rate};}
+export function stats(c:Character,level=1,mastery=0){const base=STYLE_STATS[c.style],m=1+(level-1)*.045+RARITIES.indexOf(c.rarity)*.025+mastery*.025;const hp=Math.round(base.hp*m*COMBAT_BALANCE.healthMultiplier),attack=Math.round(base.atk*m),defense=Math.round(base.def*m);return {hp,attack,defense,power:Math.round(hp*.32+attack*5+defense*3),speed:base.speed+(level-1)*.6,range:base.range,rate:base.rate};}
 export const STARTERS=['naruto-uzumaki','ichigo-kurosaki','tanjiro-kamado'];
 export type BoxType = 'Normal'|'Rare'|'Epic'|'Gold'|'Mythic'|'Legendary'|'Aether';
 export const BOXES:{type:BoxType;color:string;cost:number;rates:number[];phrase:string}[]=[

@@ -1,8 +1,20 @@
-# AETHER ARC — Complete Edition
+# AETHER ARC — Combat Upgrade
 
 One project for **playing, editing, and publishing**. Includes all 77 fighters, 25 arenas, combat/progression code, artwork, and the animation lab.
 
 This edition adds 12 illustrated animation frames each for Naruto, Ichigo, and Tanjiro, including running, strike anticipation/contact/recovery, guard, recoil, airborne defeat, and a prone landing. The other 74 fighters use the improved joint-driven renderer. Attack frames follow combat contact timing; knockouts include a launch, rebound, and grounded finish.
+
+
+## September 2026 combat update
+
+- Smoother acceleration and braking, slower backsteps, smaller distance-driven strides, and foot placement controlled by inverse kinematics. Shoe soles stay level instead of twisting with the shin.
+- CPU fighters now close to their actual strike range, block visible windups, dodge heavy attacks/projectiles, counter recovery, use awakening, and connect short combos. Rookie, Fighter, and Veteran remain available in Options.
+- 18% more base health, 24% less pre-defense damage, reduced damage on long combos, and slower ultimate charging. Three opponents still must be eliminated to win.
+- Replacement selection continues the defeated fighter's landing animation; combat inputs are disabled until the next fight begins.
+- Fixed missing per-opponent levels causing invalid health. Saved ownership, currency, teams, and rewards retain their existing format.
+- Bounded animation-frame memory and avoided unnecessary GPU canvas resizing.
+
+The ZIP includes the rebuilt `play/` game as well as editable source. See **UPDATE-NOTES.md** for verification and current artwork limitations.
 
 ## 1. Play the included game
 
@@ -18,7 +30,7 @@ Progress for this edition is saved on the same browser and device. The launcher 
 
 ## 2. Publish on GitHub Pages
 
-1. Create your GitHub repository. Extract the ZIP and push the **contents of the `aether-arc` folder** to the repository root. `package.json` and `.github/workflows/pages.yml` must be at that root.
+1. Create your GitHub repository. Extract the ZIP and push the **contents of the extracted `AetherArc` folder** to the repository root. `package.json` and `.github/workflows/pages.yml` must be at that root.
 2. In the repository, open **Settings → Pages → Build and deployment → Source → GitHub Actions**.
 3. Open **Actions → Publish playable game → Run workflow** if the initial push happened before enabling Pages. Future pushes to `main` or `master` trigger it automatically.
 4. Wait for the workflow to succeed. Open the deployment link shown in the workflow or Settings → Pages.
@@ -67,7 +79,7 @@ Choose any fighter and arena; trigger attacks, skills, ultimate, run cycle, and 
 | Q / E | Character skills |
 | R | Awakening |
 | F | Ultimate at 100% energy |
-| C / T | Support / tag |
+| 1 / 2 / 3 | Select a living reserve after knockout |
 | Escape | Pause |
 
 Campaign controls also support touch/mouse. Start with Naruto, Ichigo, and Tanjiro; complete training for Luffy and a Rare Box. Unlock other fighters through play. All 25 arenas are immediately available.

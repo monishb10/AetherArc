@@ -7,5 +7,5 @@ function run(args){const r=spawnSync(process.execPath,args,{stdio:'inherit'});if
 try{
  writeFileSync(join(output,'package.json'),'{"type":"commonjs"}');
  run(['node_modules/typescript/bin/tsc','game/data.ts','game/progression.ts','game/engine.ts','game/audio.ts','game/request.ts','--outDir',output,'--target','es2022','--module','commonjs','--skipLibCheck','--resolveJsonModule','--esModuleInterop']);
- run(['tests/game-invariants.cjs',output]);run(['tests/combat-engine.cjs',output]);run(['tests/pages-edition.cjs',output]);
+ run(['tests/game-invariants.cjs',output]);run(['tests/combat-engine.cjs',output]);run(['tests/pages-edition.cjs',output]);run(['tests/match-pacing.cjs',output]);
 }finally{rmSync(output,{recursive:true,force:true});}

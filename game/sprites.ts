@@ -94,13 +94,15 @@ function triangle(c:CanvasRenderingContext2D,img:HTMLImageElement,s:Point[],d:Po
  c.closePath();c.clip();c.transform(A,B,C,D,d0[0]-A*s0[0]-C*s0[1],d0[1]-B*s0[0]-D*s0[1]);c.drawImage(img,0,0);c.restore();
 }
 const cache=new Map<string,{canvas:HTMLCanvasElement;pad:number}>();
+let cachePixels=0;
 let gpu:MeshRenderer|null|undefined;
 type Mesh={source:Point[];weights:Influence[];uv:Float32Array;indices:Uint16Array};
 const meshes=new Map<string,Mesh>();
 function skin(frame:Frame,sprite:Sprite,img:HTMLImageElement,f:Fighter,time:number){
- const pose=samplePose(f,time).frame,stamp=Math.floor(f.clock*RIG_FPS),stride=Math.round(f.stride*15);
- const timeStep=f.state==='idle'?Math.floor((((time*2.1+f.c.seed)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)/(Math.PI*2))*32):Math.floor(time*RIG_FPS);
- const key=[frame.src,f.state,stamp,f.chain,stride,timeStep,f.defeated?1:0].join(':');
+ const pose=samplePose(f,time).frame,walking=f.state==='run',resting=['idle','lobbyIdle','victory'].includes(f.state);
+ const stride=Math.round((((f.stride%(Math.PI*2))+Math.PI*2)%(Math.PI*2))*RIG_FPS/(Math.PI*2));
+ const stamp=walking?stride:resting?Math.floor(time*24):Math.floor(f.clock*RIG_FPS);
+ const key=[frame.src,f.state,stamp,f.chain,f.face,Math.round((f.gaitVelocity??f.vx)/20),Math.round(f.vy/60),f.duration,f.defeated?1:0].join(':');
  const found=cache.get(key);if(found)return found;
  const pad=Math.ceil(sprite.sourceHeight*.5),w=frame.w+pad*2,h=frame.h+pad*2;
  const rig=buildRig(f,pose,time),meshKey=frame.src+':'+f.c.style+':'+pose;
@@ -120,7 +122,15 @@ function skin(frame:Frame,sprite:Sprite,img:HTMLImageElement,f:Fighter,time:numb
  const rendered=gpu?.render(img,positions,mesh.uv,mesh.indices,w,h);
  if(rendered)c.drawImage(rendered,0,0);
  else{c.scale(2,2);for(let i=0;i<mesh.indices.length;i+=3){const [a,b,d]=Array.from(mesh.indices.slice(i,i+3));triangle(c,img,[mesh.source[a],mesh.source[b],mesh.source[d]],[dest[a],dest[b],dest[d]]);}}
- const out={canvas,pad};cache.set(key,out);if(cache.size>160)cache.delete(cache.keys().next().value!);return out;
+ const out={canvas,pad};cache.set(key,out);cachePixels+=canvas.width*canvas.height;
+ // Bound pixel memory as well as entry count; a few large paintings can
+ // otherwise consume hundreds of megabytes during a long six-fighter match.
+ while(cache.size>24||cachePixels>12000000&&cache.size>1){
+  const oldest=cache.keys().next().value!,entry=cache.get(oldest)!;
+  cachePixels-=entry.canvas.width*entry.canvas.height;cache.delete(oldest);
+  entry.canvas.width=0;entry.canvas.height=0;
+ }
+ return out;
 }
 
 export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,time:number,extraScale=1,motion=1){
@@ -166,7 +176,14 @@ export function drawIllustratedFighter(ctx:CanvasRenderingContext2D,f:Fighter,ti
    const weightShift=Math.sin(time*1.3+f.c.seed*1.4)*motion;
    ctx.rotate(weightShift*0.007);
    ctx.scale(1+breath*0.0015,1+breath*0.005);
-  }else if(f.state==='run')ctx.translate(0,-Math.abs(Math.sin(f.stride*2))*3*motion);
+  }else if(f.state==='run'){
+   // Drawn contact frames already provide the foot lift; a second root bounce
+   // made the feet float above the floor.
+   ctx.rotate((f.vx*f.face<0?-.009:.006)*motion);
+  }else if(['light','heavy','skill1','skill2','special'].includes(f.state)){
+   const pose=samplePose(f,time);
+   ctx.translate(0,-clip.height*.46);ctx.rotate(pose.lean*.22*motion);ctx.translate(0,clip.height*.46);
+  }
   if(f.flash>0)ctx.filter='brightness(1.8) saturate(.5)';
   if(f.state==='dodge')ctx.globalAlpha*=.72;
   ctx.scale(scale,scale);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';

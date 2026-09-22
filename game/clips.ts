@@ -8,7 +8,10 @@ export const fighterClips:Record<string,ArtClip>=manifest;
 /** Drawn contact frames use the same contact time as the combat simulation. */
 export function clipFrame(f:Fighter):number {
  if(f.defeated)return f.koBounces>0?11:f.clock<.13?9:10;
- if(f.state==='run')return Math.floor(((f.stride/(Math.PI*2))%1+1)%1*4);
+ if(f.state==='run'){
+  const direction=f.vx*f.face<0?-1:1;
+  return Math.floor(((f.stride*direction/(Math.PI*2))%1+1)%1*4);
+ }
  if(f.state==='jump'||f.state==='fall')return f.vy<0?1:3;
  if(f.state==='dash')return 2;
  if(f.state==='dodge')return 3;

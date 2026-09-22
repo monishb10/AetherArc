@@ -16,7 +16,9 @@ export class MeshRenderer {
  render(image:HTMLImageElement,positions:Float32Array,uv:Float32Array,indices:Uint16Array,w:number,h:number):HTMLCanvasElement|null {
   const gl=this.gl;if(gl.isContextLost())return null;
   // Render at 2x so mesh edges remain clean on high-density displays.
-  this.canvas.width=w*2;this.canvas.height=h*2;gl.viewport(0,0,w*2,h*2);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(this.program);
+  if(this.canvas.width!==w*2)this.canvas.width=w*2;
+  if(this.canvas.height!==h*2)this.canvas.height=h*2;
+  gl.viewport(0,0,w*2,h*2);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(this.program);
   gl.disable(gl.BLEND);gl.disable(gl.DEPTH_TEST);
   let texture=this.textures.get(image);
   if(!texture){texture=gl.createTexture()!;gl.bindTexture(gl.TEXTURE_2D,texture);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,1);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);this.textures.set(image,texture);
